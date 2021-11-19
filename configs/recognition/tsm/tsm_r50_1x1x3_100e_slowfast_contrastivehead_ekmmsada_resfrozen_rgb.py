@@ -3,12 +3,20 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
+custom_imports = dict(imports=['mmaction.core.hooks.random_init'], allow_failed_imports=False)
+
+custom_hooks = [
+    dict(type='TSMHeadRandomInit')
+]
+
+
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
             type='SlowFastSelfSupervisedContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
+                frozen_stages=4,
                 norm_eval=False,
                 shift_div=8),
             cls_head=dict(num_segments=16, num_classes=8), 
