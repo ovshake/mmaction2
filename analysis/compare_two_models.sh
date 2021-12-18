@@ -1,30 +1,71 @@
-# This file is used to dump all the commands to generate prediction pickle files. those
-# pickle files are further used to get predictions which are correct by one model but incorrect by another 
-# model 
+# # This file is used to dump all the commands to generate prediction pickle files. those
+# # pickle files are further used to get predictions which are correct by one model but incorrect by another 
+# # model 
 
-#################################################
-# # COLOR JITTER RUNS
-################################################# 
+### K400 - UH RUNS 
 
-d1_ckpt="/home/ubuntu/users/maiti/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/slowfastcontrastivehead-us/train_D1_test_D1/best_top1_acc_epoch_50.pth"
+train_k400_test_uh_baseline_output="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/baseline/train_kinetics_test_ucf-hmdb/output.pkl"
 
-d2_ckpt="/home/ubuntu/users/maiti/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/slowfastcontrastivehead-us/train_D2_test_D2/best_top1_acc_epoch_95.pth"
+train_uh_test_k400_baseline_output="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/baseline/train_ucf-hmdb_test_kinetics/output.pkl"
 
-d3_ckpt="/home/ubuntu/users/maiti/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/slowfastcontrastivehead-us/train_D3_test_D3/best_top1_acc_epoch_45.pth"
+## Color Jitter
+
+# train UH Test K400
+exp_name="colorjitter-contrastive-head"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_colorjitter_contrastive_head_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_ucf-hmdb_test_kinetics/videos"
+
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_85.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics/output.pkl -m2 $train_uh_test_k400_baseline_output -t "kinetics" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train UH Test Kinetics _ $exp_name-train-uh-test-k400"  
 
 
-exp_name="slowfastcontrastivehead-us"
-config="/home/ubuntu/users/maiti/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_slowfast_contrastivehead_ekmmsada_rgb.py"
+# train K400 Test UH
+exp_name="colorjitter-contrastive-head"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_colorjitter_contrastive_head_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_kinetics_test_ucf-hmdb/videos"
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D1_test_D2/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D1_test_D2/output.pkl -t 2 -w work_dirs/evaluation_pkl/$exp_name/train_D1_test_D2/videos --config-name $config --ckpt-path $d1_ckpt  -wd "Train D1 Test D2 $exp_name _ $exp_name-train-D1-test-D2" -g -gradcam
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_kinetics_test_kinetics/best_top1_acc_epoch_60.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_kinetics_test_ucf-hmdb/output.pkl -m2 $train_k400_test_uh_baseline_output -t "ucf-hmdb" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train K400 Test UH _ $exp_name-train-k400-test-uh"  
 
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D1_test_D3/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D1_test_D3/output.pkl -t 3 -w work_dirs/evaluation_pkl/$exp_name/train_D1_test_D3/videos --config-name $config --ckpt-path $d1_ckpt  -wd "Train D1 Test D3 $exp_name _ $exp_name-train-D1-test-D3" -g -gradcam
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D2_test_D1/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D2_test_D1/output.pkl -t 1 -w work_dirs/evaluation_pkl/$exp_name/train_D2_test_D1/videos --config-name $config --ckpt-path $d2_ckpt -wd "Train D2 Test D1 $exp_name _ $exp_name-train-D2-test-D1" -g -gradcam
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D2_test_D3/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D2_test_D3/output.pkl -t 3 -w work_dirs/evaluation_pkl/$exp_name/train_D2_test_D3/videos --config-name $config --ckpt-path $d2_ckpt  -wd "Train D2 Test D3 $exp_name _ $exp_name-train-D2-test-D3" -g -gradcam 
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D3_test_D1/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D3_test_D1/output.pkl -t 1 -w work_dirs/evaluation_pkl/$exp_name/train_D3_test_D1/videos --config-name $config --ckpt-path $d3_ckpt -wd "Train D3 Test D1 $exp_name _ $exp_name-train-D3-test-D1" -g -gradcam 
+## VCOP
 
-python analysis/compare_two_models.py -m1 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/$exp_name/train_D3_test_D2/output.pkl -m2 /home/ubuntu/users/maiti/projects/mmaction2/work_dirs/evaluation_pkl/tsm-baseline-uniform-sampling/train_D3_test_D2/output.pkl -t 2 -w work_dirs/evaluation_pkl/$exp_name/train_D3_test_D2/videos --config-name $config --ckpt-path $d3_ckpt -wd "Train D3 Test D2 $exp_name _ $exp_name-train-D3-test-D2" -g -gradcam 
+# train UH Test K400 
+exp_name="vcop-3"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_vcop_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/vcop-3/train_ucf-hmdb_test_kinetics/videos"
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/vcop-3/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_20.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics/output.pkl -m2 $train_uh_test_k400_baseline_output -t "kinetics" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train UH Test Kinetics _ $exp_name-train-uh-test-k400"  
+
+
+# train K400 Test UH 
+
+exp_name="vcop-3"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_vcop_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/vcop-3/train_kinetics_test_ucf-hmdb/videos"
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/vcop-3/train_kinetics_test_kinetics/best_top1_acc_epoch_20.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_kinetics_test_ucf-hmdb/output.pkl -m2 $train_k400_test_uh_baseline_output -t "ucf-hmdb" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train kinetics Test UH _ $exp_name-train-k400-test-uh"  
+
+
+## Slowfast
+
+# train UH Test K400 
+exp_name="slow-fast-contrastive-head"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_slowfast_contrastive_head_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/slow-fast-contrastive-head/train_ucf-hmdb_test_kinetics/videos"
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/slow-fast-contrastive-head/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_45.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics/output.pkl -m2 $train_uh_test_k400_baseline_output -t "kinetics" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train UH Test Kinetics _ $exp_name-train-uh-test-k400"  
+
+
+# train K400 Test UH 
+
+exp_name="slow-fast-contrastive-head"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_slowfast_contrastive_head_rgb.py"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/slow-fast-contrastive-head/train_kinetics_test_ucf-hmdb/videos"
+ckpt_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/slow-fast-contrastive-head/train_kinetics_test_kinetics/best_top1_acc_epoch_5.pth"
+python analysis/compare_two_models.py -m1 /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_kinetics_test_ucf-hmdb/output.pkl -m2 $train_k400_test_uh_baseline_output -t "ucf-hmdb" -w $work_dir --config-name $config --ckpt-path $ckpt_path -wd "Train kinetics Test UH _ $exp_name-train-k400-test-uh"  
+
+
