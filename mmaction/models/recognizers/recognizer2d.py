@@ -92,7 +92,7 @@ class Recognizer2D(BaseRecognizer):
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
 
         # should have cls_head if not extracting features
-        cls_score = self.cls_head(x, num_segs)
+        cls_score = self.cls_head(x.float(), num_segs, test=True)
 
         assert cls_score.size()[0] % batches == 0
         # calculate num_crops automatically
@@ -787,7 +787,7 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
 
             x_pathway_B = x_pathway_B.reshape((x_pathway_B.shape[0], -1))
             x_pathway_B = x_pathway_B.reshape(x_pathway_B.shape + (1, 1))            
-
+ 
         cls_score_pathway_A = self.cls_head(x_pathway_A, num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score_pathway_A, gt_labels, **kwargs)
@@ -842,3 +842,135 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             num_samples=len(next(iter(data_batch[0].values()))))
 
         return outputs
+    
+@RECOGNIZERS.register_module()
+class MultipleContrastiveRecognizer2D(Recognizer2D):
+    def __init__(self, backbone,
+                 cls_head=None,
+                 num_contrastive_heads=None,
+                 contrastive_head=None,
+                 self_supervised_loss=None,
+                 neck=None,
+                 train_cfg=None,
+                 test_cfg=None,
+                 device='cuda'):
+
+        super().__init__(backbone=backbone, cls_head=cls_head, train_cfg=train_cfg, test_cfg=test_cfg)
+
+        # self.cls_head = builder.build_head(cls_head) if cls_head else None
+        self.self_supervised_loss = builder.build_loss(self_supervised_loss)
+        
+        assert num_contrastive_heads, 'Need atleast 1 contrastive head!' 
+        assert contrastive_head, 'Need configuration of the contrastive head!'
+
+        self.contrastive_heads = [builder.build_head(contrastive_head).to(device) for _ in range(num_contrastive_heads)]  
+
+
+
+    def process_pathways(self, imgs):
+        batches = imgs.shape[0] 
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:]) 
+        num_segs = imgs.shape[0] // batches 
+        x = self.extract_feat(imgs) 
+        
+        if self.backbone_from in ['torchvision', 'timm']:
+            if len(s.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
+                x = nn.AdaptiveAvgPool2d(1)(x) 
+        
+            x = x.reshape((x.shape[0], -1)) 
+            x = x.reshape(x.shape + (1, 1)) 
+        
+        return x 
+    
+    def forward_train(self, imgs_pathways, labels, **kwargs):
+        """Defines the computation performed at every call when training."""
+
+        assert self.with_cls_head
+
+        processed_pathways = [] 
+        for imgs in imgs_pathways:
+            x = self.process_pathways(imgs.float())
+            processed_pathways.append(x) 
+
+        losses = dict()     
+        for idx in range(len(self.contrastive_heads)):
+            processed_pathways[idx] = self.contrastive_heads[idx](processed_pathways[idx]) 
+ 
+        concatenated_features = torch.concat(processed_pathways, axis=1)
+        
+        batch_size = concatenated_features.shape[0]
+        concatenated_features = concatenated_features.reshape(batch_size, -1)
+        cls_score = self.cls_head(concatenated_features, -1) 
+        gt_labels = labels.squeeze()
+        loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
+        loss_self_supervised = self.self_supervised_loss(processed_pathways)
+        losses.update(loss_cls)
+        losses.update(loss_self_supervised)
+        return losses
+        
+
+    def train_step(self, data_batch, optimizer, **kwargs):
+        """The iteration step during training.
+
+        This method defines an iteration step during training, except for the
+        back propagation and optimizer updating, which are done in an optimizer
+        hook. Note that in some complicated cases or models, the whole process
+        including back propagation and optimizer updating is also defined in
+        this method, such as GAN.
+
+        Args:
+            data_batch (dict): The output of dataloader.
+            optimizer (:obj:`torch.optim.Optimizer` | dict): The optimizer of
+                runner is passed to ``train_step()``. This argument is unused
+                and reserved.
+
+        Returns:
+            dict: It should contain at least 3 keys: ``loss``, ``log_vars``,
+                ``num_samples``.
+                ``loss`` is a tensor for back propagation, which can be a
+                weighted sum of multiple losses.
+                ``log_vars`` contains all the variables to be sent to the
+                logger.
+                ``num_samples`` indicates the batch size (when the model is
+                DDP, it means the batch size on each GPU), which is used for
+                averaging the logs.
+        """
+        num_pathways = len(data_batch)
+        imgs = [] 
+        for i in range(num_pathways):
+            imgs.append(data_batch[i]['imgs']) 
+        
+        label = data_batch[0]['label']
+
+        aux_info = {}
+        for item in self.aux_info:
+            assert item in data_batch
+            aux_info[item] = data_batch[item]
+
+        losses = self(imgs, label=label, return_loss=True)
+
+        loss, log_vars = self._parse_losses(losses)
+
+        outputs = dict(
+            loss=loss,
+            log_vars=log_vars,
+            num_samples=len(next(iter(data_batch[0].values()))))
+
+        return outputs
+    
+    def _do_test(self, imgs):
+        """Defines the computation performed at every call when evaluation,
+        testing and gradcam."""
+        assert self.with_cls_head
+        x = self.process_pathways(imgs.float())
+        processed_pathways = [None for _ in range(len(self.contrastive_heads))]
+        losses = dict()     
+        for idx in range(len(self.contrastive_heads)):
+            processed_pathways[idx] = self.contrastive_heads[idx](x) 
+ 
+        concatenated_features = torch.concat(processed_pathways, axis=1)
+        
+        batch_size = concatenated_features.shape[0]
+        concatenated_features = concatenated_features.reshape(batch_size, -1)
+        cls_score = self.cls_head(concatenated_features, -1) 
+        return cls_score

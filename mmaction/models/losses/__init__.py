@@ -8,9 +8,10 @@ from .nll_loss import NLLLoss
 from .ohem_hinge_loss import OHEMHingeLoss
 from .ssn_loss import SSNLoss
 from .slowfast_selfsupervised_loss import SlowFastSelfSupervisedLoss
+from .multiple_contrastive_loss import MultipleContrastiveLoss
 
 __all__ = [
     'BaseWeightedLoss', 'CrossEntropyLoss', 'NLLLoss', 'BCELossWithLogits',
     'BinaryLogisticRegressionLoss', 'BMNLoss', 'OHEMHingeLoss', 'SSNLoss',
-    'HVULoss', 'SlowFastSelfSupervisedLoss'
+    'HVULoss', 'SlowFastSelfSupervisedLoss', 'MultipleContrastiveLoss'
 ]

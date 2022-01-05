@@ -3,8 +3,8 @@ from .audio_recognizer import AudioRecognizer
 from .base import BaseRecognizer
 from .recognizer2d import (Recognizer2D, SlowFastSelfSupervisedRecognizer2D, VCOPSRecognizer2D, 
                         SlowFastSelfSupervisedContrastiveHeadRecognizer2D, 
-                        ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D)
+                        ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D, MultipleContrastiveRecognizer2D)
 from .recognizer3d import Recognizer3D
 
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D',
-            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D', 'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D']
+            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D', 'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D', 'MultipleContrastiveRecognizer2D']

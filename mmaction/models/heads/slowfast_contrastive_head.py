@@ -62,7 +62,7 @@ class TwoPathwayContrastiveHead(nn.Module):
     def forward(self, features):
         batch_size = features.shape[0]
         features = features.view(batch_size, -1) 
-        features = self.encoder(features) 
+        features = self.encoder(features.float()) 
         return features
     
     def init_weights(self):
