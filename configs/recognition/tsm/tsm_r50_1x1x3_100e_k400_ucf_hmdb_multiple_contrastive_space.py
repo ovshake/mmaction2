@@ -14,7 +14,7 @@ model = dict(
                 depth=50,
                 norm_eval=False,
                 shift_div=8),
-            cls_head=dict(num_segments=8, num_classes=38, spatial_type=None), 
+            cls_head=dict(num_segments=8, num_classes=38, spatial_type=None, in_channels=1536), 
             num_contrastive_heads=4, 
             self_supervised_loss=dict(type='MultipleContrastiveLoss', all_way=True), 
             contrastive_head=dict(type='TwoPathwayContrastiveHead',

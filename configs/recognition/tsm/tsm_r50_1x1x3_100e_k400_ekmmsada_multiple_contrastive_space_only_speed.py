@@ -8,15 +8,16 @@ workflow = [('train', 1)]
 fp16 = dict()
 
 # model settings
-# load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
+load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
             type='MultipleContrastiveRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=8, num_classes=8, spatial_type=None, in_channels=1024), 
-            num_contrastive_heads=2, 
+            cls_head=dict(num_segments=8, num_classes=8, spatial_type=None, in_channels=512), 
+            num_contrastive_heads=1, 
             self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
             contrastive_head=dict(type='TwoPathwayContrastiveHead',
                                 feature_size=2048 * 7 * 7))
@@ -92,12 +93,12 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.75 * (16 / 8) * (4 / 8),  # this lr is used for 8 gpus # format is lr * (batch_size / original_size) * (gpu-used / original gpu-used)
+    lr=0.075 * (16 / 8) * (4 / 8),  # this lr is used for 8 gpus # format is lr * (batch_size / original_size) * (gpu-used / original gpu-used)
 )
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-lr_config = dict(policy='step', step=[200, 400])
+lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=5)
 work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/slow-fast-contrastive-head/train_D1_test_D2/'
-total_epochs = 500
+total_epochs = 100

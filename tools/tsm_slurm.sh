@@ -4,7 +4,6 @@
 #SBATCH -o /data/abhishek/outputs/slurm.out 
 #SBATCH -e /data/abhishek/outputs/slurm.err 
 #SBATCH -t 13-0:00
-#SBATCH -w node1
 
 
 . /data/abhishek/anaconda3/etc/profile.d/conda.sh 
@@ -14,8 +13,8 @@ conda activate action-dg
 
 
 
-exp_name="multicontrastive-learning-only-speed-fp16-scratch"
-exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb"
+exp_name="multicontrastive-learning-speed-fp16-bn-100e"
+exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_test"
 config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ekmmsada_multiple_contrastive_space_only_speed.py"
 
 

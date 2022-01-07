@@ -886,24 +886,43 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
         """Defines the computation performed at every call when training."""
 
         assert self.with_cls_head
+        losses = dict() 
 
         processed_pathways = [] 
         for imgs in imgs_pathways:
             x = self.process_pathways(imgs.float())
             processed_pathways.append(x) 
+         
+        embedding_spaces = None
 
-        losses = dict()     
+            
         for idx in range(len(self.contrastive_heads)):
-            processed_pathways[idx] = self.contrastive_heads[idx](processed_pathways[idx]) 
- 
-        concatenated_features = torch.concat(processed_pathways, axis=1)
+
+            img_embeddings = None
+            for feature_img in processed_pathways:
+                h_img = self.contrastive_heads[idx](feature_img)                
+                if img_embeddings is None:
+                    img_embeddings = h_img.unsqueeze(0)
+                else:
+                    img_embeddings = torch.vstack((img_embeddings, h_img.unsqueeze(0))) 
+
+            if embedding_spaces is None:
+                embedding_spaces = img_embeddings.unsqueeze(0)
+            else:
+                embedding_spaces = torch.vstack((embedding_spaces, img_embeddings.unsqueeze(0)))
+
+        del processed_pathways 
         
-        batch_size = concatenated_features.shape[0]
-        concatenated_features = concatenated_features.reshape(batch_size, -1)
-        cls_score = self.cls_head(concatenated_features, -1) 
+        # For classification I am taking features of Q from all the embedding space
+        # and feeding them to the classifier.
+        cls_features = embedding_spaces[:, -1, ...].permute(1, 0 ,2) 
+        batch_size = cls_features.shape[0]
+        cls_features = cls_features.reshape(batch_size, -1)
+        
+        cls_score = self.cls_head(cls_features, -1) 
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
-        loss_self_supervised = self.self_supervised_loss(processed_pathways)
+        loss_self_supervised = self.self_supervised_loss(embedding_spaces)
         losses.update(loss_cls)
         losses.update(loss_self_supervised)
         return losses
@@ -962,15 +981,24 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
         """Defines the computation performed at every call when evaluation,
         testing and gradcam."""
         assert self.with_cls_head
+        batches = imgs.shape[0]
+
         x = self.process_pathways(imgs.float())
-        processed_pathways = [None for _ in range(len(self.contrastive_heads))]
-        losses = dict()     
-        for idx in range(len(self.contrastive_heads)):
-            processed_pathways[idx] = self.contrastive_heads[idx](x) 
- 
-        concatenated_features = torch.concat(processed_pathways, axis=1)
         
-        batch_size = concatenated_features.shape[0]
-        concatenated_features = concatenated_features.reshape(batch_size, -1)
-        cls_score = self.cls_head(concatenated_features, -1) 
+        cls_features = None 
+        losses = dict()
+
+        for idx in range(len(self.contrastive_heads)):
+            
+            h_img = self.contrastive_heads[idx](x)
+            if cls_features is None:
+                cls_features = h_img.unsqueeze(0)
+            else:
+                cls_features = torch.vstack((cls_features, h_img.unsqueeze(0))) 
+        
+        cls_features = cls_features.permute(1, 0, 2)
+        cls_features = cls_features.reshape(cls_features.shape[0], -1) 
+        cls_score = self.cls_head(cls_features.float(), -1) 
+        cls_score = self.average_clip(cls_score, 
+                                    cls_score.size()[0] // batches)
         return cls_score
