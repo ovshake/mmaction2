@@ -1,62 +1,69 @@
+section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
 
-# exp_name="baseline"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb.py"
-# test_domain="kinetics"
-# ckpt="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/baseline/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_55.pth"
-# out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics"
+exp_name="tsm-baseline-mmsada"
 
 
-# python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
 
 
-# exp_name="colorjitter-contrastive-head"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_colorjitter_contrastive_head_rgb.py"
-# test_domain="kinetics"
-# out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics"
-# ckpt="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_85.pth"
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
+
+d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/best_top1_acc_epoch_50.pth"
 
 
-# python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
+d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/best_top1_acc_epoch_50.pth"
+
+d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/best_top1_acc_epoch_25.pth"
 
 
-# exp_name="slow-fast-contrastive-head"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_slowfast_contrastive_head_rgb.py"
-# test_domain="kinetics"
-# ckpt="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/slow-fast-contrastive-head/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_45.pth"
-# out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics"
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
 
-# python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
 
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
 
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
 
 
-# exp_name="vcop-3"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_vcop_rgb.py"
-# test_domain="kinetics"
-# ckpt="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/vcop-3/train_ucf-hmdb_test_ucf-hmdb/best_top1_acc_epoch_20.pth"
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
 
-# out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_ucf-hmdb_test_kinetics"
-
-# python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
 
 
 
 
-# exp_name="colorjitter-contrastive-head"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_colorjitter_contrastive_head_rgb.py"
-# test_domain="ucf-hmdb"
-# out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_kinetics_test_ucf-hmdb"
-# ckpt="/data/abhishek/projects/mmactioˀn2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/colorjitter-contrastive-head/train_kinetics_test_kinetics/best_top1_acc_epoch_60.pth"
 
 
-# python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
 
 
-exp_name="baseline"
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb.py"
-test_domain="ucf-hmdb"
-out_path="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/$exp_name/train_kinetics_test_ucf-hmdb"
-ckpt="/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb/baseline/train_kinetics_test_kinetics/best_top1_acc_epoch_60.pth"
+
+section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
+
+exp_name="color-jitter-moco-m-99-q-4096"
 
 
-python tools/test.py $config $ckpt --out "$out_path/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain=$test_domain
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_moco_contrastivehead_ekmmsada_rgb.py"
+
+
+work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
+
+d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/best_top1_acc_epoch_80.pth"
+
+
+d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/best_top1_acc_epoch_55.pth"
+
+d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/best_top1_acc_epoch_10.pth"
+
+
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
+
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
+
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
+
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
+
+
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
+
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 

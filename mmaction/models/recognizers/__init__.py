@@ -5,6 +5,10 @@ from .recognizer2d import (Recognizer2D, SlowFastSelfSupervisedRecognizer2D, VCO
                         SlowFastSelfSupervisedContrastiveHeadRecognizer2D, 
                         ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D, MultipleContrastiveRecognizer2D)
 from .recognizer3d import Recognizer3D
+from .mocorecognizer2d import SlowFastSelfSupervisedMOCORecognizer2D, ColorSpatialSelfSupervisedMOCOContrastiveHeadRecognizer2D
 
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D',
-            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D', 'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D', 'MultipleContrastiveRecognizer2D']
+            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D', 
+            'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D', 
+            'MultipleContrastiveRecognizer2D', 'SlowFastSelfSupervisedMOCORecognizer2D', 
+            'ColorSpatialSelfSupervisedMOCOContrastiveHeadRecognizer2D']

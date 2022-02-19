@@ -4,7 +4,7 @@ from .augmentations import (AudioAmplify, CenterCrop, ColorJitter, Flip, Fuse,
                             MultiScaleCrop, Normalize, PytorchVideoTrans,
                             RandomCrop, RandomRescale, RandomResizedCrop,
                             RandomScale, Resize, TenCrop, ThreeCrop,
-                            TorchvisionTrans)
+                            TorchvisionTrans, RandomSampleColorJitter)
 from .compose import Compose
 from .formating import (Collect, FormatAudioShape, FormatGCNInput, FormatShape,
                         ImageToTensor, Rename, ToDataContainer, ToTensor,
@@ -17,7 +17,7 @@ from .loading import (AudioDecode, AudioDecodeInit, AudioFeatureSelector,
                       OpenCVInit, PIMSDecode, PIMSInit, PyAVDecode,
                       PyAVDecodeMotionVector, PyAVInit, RawFrameDecode,
                       SampleAVAFrames, SampleFrames, SampleProposalFrames,
-                      UntrimmedSampleFrames)
+                      UntrimmedSampleFrames, RandomFrequencySampleFrames)
 from .pose_loading import (GeneratePoseTarget, LoadKineticsPose,
                            PaddingWithLoop, PoseDecode, PoseNormalize,
                            UniformSampleFrames)
@@ -38,5 +38,6 @@ __all__ = [
     'RandomRescale', 'PyAVDecodeMotionVector', 'Rename', 'Imgaug',
     'UniformSampleFrames', 'PoseDecode', 'LoadKineticsPose',
     'GeneratePoseTarget', 'PIMSInit', 'PIMSDecode', 'TorchvisionTrans',
-    'PytorchVideoTrans', 'PoseNormalize', 'FormatGCNInput', 'PaddingWithLoop'
+    'PytorchVideoTrans', 'PoseNormalize', 'FormatGCNInput', 'PaddingWithLoop', 
+    'RandomFrequencySampleFrames', 'RandomSampleColorJitter'
 ]

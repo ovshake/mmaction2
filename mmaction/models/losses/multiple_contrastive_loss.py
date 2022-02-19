@@ -1,10 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn.functional as F
+import torch.distributed as dist
 
 from ..builder import LOSSES
 from .base import BaseWeightedLoss
 
+def concat_all_gather(tensor):
+    """
+    Performs all_gather operation on the provided tensors.
+    *** Warning ***: torch.distributed.all_gather has no gradient.
+    """
+    tensors_gather = [torch.ones_like(tensor)
+        for _ in range(torch.distributed.get_world_size())]
+    torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
+    tensors_gather[dist.get_rank()] = tensor
+    output = torch.cat(tensors_gather, dim=2)
+    return output
 
 @LOSSES.register_module()
 class MultipleContrastiveLoss(BaseWeightedLoss):
@@ -46,7 +58,7 @@ class MultipleContrastiveLoss(BaseWeightedLoss):
                 similarity = self._calculate_cosine_similarity(k1_feat, k2_feat) 
                 positives += similarity[mask].sum(axis=-1)
                 negatives += similarity[~mask].sum(axis=-1)
-        
+                
         loss = torch.log(positives / (positives + negatives))
         return loss 
     
@@ -79,14 +91,14 @@ class MultipleContrastiveLoss(BaseWeightedLoss):
                     negatives += negative_similarity_matrix[mask].sum(axis=-1)
 
             negatives += similarity_matrix[~mask].sum(axis=-1)
-            loss += torch.log(positives / negatives) 
+            loss += torch.log(positives / (negatives + positives)) 
 
         return loss 
     
     def _forward(self, all_embedding_features):
         assert len(all_embedding_features) > 0, 'Atleast features from one embedding space required'
-
         num_embedding_space = all_embedding_features.shape[0]
+        all_embedding_features = concat_all_gather(all_embedding_features)
         loss = 0.
         for idx_espace in range(1, num_embedding_space):
             loss += - self._calculate_leave_one_out_variant_info_nce(all_embedding_features[idx_espace]) 

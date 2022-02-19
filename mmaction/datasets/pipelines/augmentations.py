@@ -1618,6 +1618,48 @@ class ColorJitter:
 
 
 @PIPELINES.register_module()
+class RandomSampleColorJitter(ColorJitter):
+    def __call__(self, results, brightness=None, contrast=None, saturation=None, hue=None):
+        assert brightness is not None, '`brightness` value cannot be None'
+        assert contrast is not None, '`contrast` value cannot be None'
+        assert saturation is not None, '`saturation` value cannot be None'
+        assert hue is not None, '`hue` value cannot be None'
+
+        self.brightness = self.check_input(brightness, 1, 1)
+        self.contrast = self.check_input(contrast, 1, 1)
+        self.saturation = self.check_input(saturation, 1, 1)
+        self.hue = self.check_input(hue, 0.5, 0)
+        self.fn_idx = np.random.permutation(4)
+        imgs = results['imgs']
+        num_clips, clip_len = 1, len(imgs)
+
+        new_imgs = []
+        for i in range(num_clips):
+            b = np.random.uniform(
+                low=self.brightness[0], high=self.brightness[1])
+            c = np.random.uniform(low=self.contrast[0], high=self.contrast[1])
+            s = np.random.uniform(
+                low=self.saturation[0], high=self.saturation[1])
+            h = np.random.uniform(low=self.hue[0], high=self.hue[1])
+            start, end = i * clip_len, (i + 1) * clip_len
+
+            for img in imgs[start:end]:
+                img = img.astype(np.float32)
+                for fn_id in self.fn_idx:
+                    if fn_id == 0 and b != 1:
+                        img *= b
+                    if fn_id == 1 and c != 1:
+                        img = self.adjust_contrast(img, c)
+                    if fn_id == 2 and s != 1:
+                        img = self.adjust_saturation(img, s)
+                    if fn_id == 3 and h != 0:
+                        img = self.adjust_hue(img, h)
+                img = np.clip(img, 0, 255).astype(np.uint8)
+                new_imgs.append(img)
+        results['imgs'] = new_imgs
+        return results
+
+@PIPELINES.register_module()
 class CenterCrop(RandomCrop):
     """Crop the center area from images.
 

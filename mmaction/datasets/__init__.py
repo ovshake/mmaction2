@@ -19,6 +19,7 @@ from .ssn_dataset import SSNDataset
 from .video_dataset import VideoDataset
 from .epickitchens_mmsada import EpicKitchensMMSADA, EpicKitchensSlowFastMMSADA, EpicKitchensTemporalSpatialMMSADA, EpicKitchensMultipleContrastiveSpaces
 from .k400_ucf_hmdb import Kinetics400UCFHMDB, Kinetics400UCFHMDBTwoPathway, Kinetics400UCFHMDBMultipleContrastiveSpaces
+from .multicontrastive_datasets import EpicKitchensMultiContrastiveNonBinaryAugSpaces
 __all__ = [
     'VideoDataset', 'build_dataloader', 'build_dataset', 'RepeatDataset',
     'RawframeDataset', 'BaseDataset', 'ActivityNetDataset', 'SSNDataset',
@@ -27,5 +28,6 @@ __all__ = [
     'BaseMiniBatchBlending', 'CutmixBlending', 'MixupBlending', 'DATASETS',
     'PIPELINES', 'BLENDINGS', 'PoseDataset', 'ConcatDataset', 'EpicKitchensMMSADA', 'EpicKitchensSlowFastMMSADA',
     'EpicKitchensTemporalSpatialMMSADA', 'Kinetics400UCFHMDB', 'Kinetics400UCFHMDBTwoPathway', 
-    'Kinetics400UCFHMDBMultipleContrastiveSpaces', 'EpicKitchensMultipleContrastiveSpaces'
+    'Kinetics400UCFHMDBMultipleContrastiveSpaces', 'EpicKitchensMultipleContrastiveSpaces',
+    'EpicKitchensMultiContrastiveNonBinaryAugSpaces'
 ]

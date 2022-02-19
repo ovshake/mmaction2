@@ -3,22 +3,37 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
+
+# fp16 training 
+fp16 = dict()
+
 # model settings
+clip_len = 16
+
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
             type='ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=16, num_classes=8), 
-            contrastive_head=dict(type='TwoPathwayContrastiveHead',
-                                feature_size=2048 * 7 * 7))
+            cls_head=dict(num_segments=clip_len, 
+                        num_classes=8, 
+                        spatial_type=None, 
+                        in_channels=2048), 
+            vanilla_contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=clip_len,
+                                feature_size=2048), 
+            color_contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=clip_len,
+                                feature_size=2048), 
+            contrastive_loss=dict(type='ContrastiveLoss', 
+                                name='color'))
 
 # dataset settings
 train_dataset = 'D1'
 val_dataset = 'D2'
-clip_len = 16
 test_dataset = None
 dataset_type = 'RawframeDataset'
 train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA'
@@ -64,7 +79,7 @@ val_pipeline = [
 ]
 data = dict(
     videos_per_gpu=6,
-    workers_per_gpu=10,
+    workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=train_dataset_type,
@@ -87,7 +102,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (3 / 8) * (8 / 6),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (6 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

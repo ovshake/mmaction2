@@ -16,11 +16,15 @@ model = dict(
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=8, num_classes=8, spatial_type=None, in_channels=1536), 
+            cls_head=dict(num_segments=8, 
+                        num_classes=8, 
+                        spatial_type=None, 
+                        in_channels=2048), 
             num_contrastive_heads=3, 
-            self_supervised_loss=dict(type='MultipleContrastiveLoss', loss_weight=2.), 
-            contrastive_head=dict(type='TwoPathwayContrastiveHead',
-                                feature_size=2048 * 7 * 7))
+            self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
+            contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=8,
+                                feature_size=2048))
 
 # dataset settings
 dataset_type = 'RawframeDataset'
@@ -89,7 +93,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=6,
+    videos_per_gpu=12,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -114,16 +118,16 @@ data = dict(
     ))
 
 evaluation = dict(
-    interval=10, metrics=['top_k_accuracy', 'mean_class_accuracy'])
+    interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])
 
 # optimizer
 optimizer = dict(
-    lr=0.75 * (6 / 8) * (8 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-lr_config = dict(policy='step', step=[300, 400])
+lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=10)
 work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/slow-fast-contrastive-head/train_D1_test_D2/'
-total_epochs = 500
+total_epochs = 100

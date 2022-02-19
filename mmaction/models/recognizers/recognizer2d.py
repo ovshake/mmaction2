@@ -5,6 +5,7 @@ from torch import nn
 from ..builder import RECOGNIZERS
 from .base import BaseRecognizer
 from .. import builder
+from einops import rearrange
 
 
 @RECOGNIZERS.register_module()
@@ -40,7 +41,7 @@ class Recognizer2D(BaseRecognizer):
             num_segs = 1
             losses.update(loss_aux)
 
-        cls_score = self.cls_head(x, num_segs)
+        cls_score = self.cls_head(x.float(), num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
         losses.update(loss_cls)
@@ -55,7 +56,7 @@ class Recognizer2D(BaseRecognizer):
         num_segs = imgs.shape[0] // batches
 
         x = self.extract_feat(imgs)
-
+        x = nn.AdaptiveAvgPool2d(1)(x)
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
                 # apply adaptive avg pooling
@@ -92,7 +93,7 @@ class Recognizer2D(BaseRecognizer):
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
 
         # should have cls_head if not extracting features
-        cls_score = self.cls_head(x.float(), num_segs, test=True)
+        cls_score = self.cls_head(x.float(), num_segs)
 
         assert cls_score.size()[0] % batches == 0
         # calculate num_crops automatically
@@ -390,7 +391,9 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
     def __init__(self,
                  backbone,
                  cls_head=None,
-                 contrastive_head=None,
+                 slow_contrastive_head=None,
+                 fast_contrastive_head=None,
+                 contrastive_loss=None,
                  neck=None,
                  train_cfg=None,
                  test_cfg=None):
@@ -437,8 +440,11 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             self.neck = builder.build_neck(neck)
 
         self.cls_head = builder.build_head(cls_head) if cls_head else None
-        self.slow_fast_contrastive_head = builder.build_head(contrastive_head)
-        
+        self.slow_contrastive_head = builder.build_head(slow_contrastive_head)
+        self.fast_contrastive_head = builder.build_head(fast_contrastive_head)
+        self.slow_fast_contrastive_loss = builder.build_loss(contrastive_loss)
+        self.fast_to_slow_projection_head = nn.Linear(self.fast_contrastive_head.img_dim, 
+                                                self.slow_contrastive_head.img_dim, bias=True)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -501,9 +507,15 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
 
         x_slow = self.extract_feat(imgs_slow) 
         x_fast = self.extract_feat(imgs_fast) 
+        x_slow = nn.AdaptiveAvgPool2d(1)(x_slow)
+        x_fast = nn.AdaptiveAvgPool2d(1)(x_fast)
+        x_slow = x_slow.squeeze() 
+        x_fast = x_fast.squeeze() 
+        contrastive_slow_features = self.slow_contrastive_head(x_slow.float())  
+        contrastive_fast_features = self.fast_contrastive_head(x_fast.float())
+        projected_fast_features = self.fast_to_slow_projection_head(contrastive_fast_features)
 
-        contrastive_slow_features = self.slow_fast_contrastive_head(x_slow)  
-        contrastive_fast_features = self.slow_fast_contrastive_head(x_fast)
+
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x_slow.shape) == 4 and (x_slow.shape[2] > 1 or x_slow.shape[3] > 1):
                 # apply adaptive avg pooling
@@ -520,21 +532,10 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             x_fast = x_fast.reshape(x_fast.shape + (1, 1))            
 
         
-        # if self.with_neck:
-        #     x = [
-        #         each.reshape((-1, num_segs) +
-        #                      each.shape[1:]).transpose(1, 2).contiguous()
-        #         for each in x
-        #     ]
-        #     x, loss_aux = self.neck(x, labels.squeeze())
-        #     x = x.squeeze(2)
-        #     num_segs = 1
-        #     losses.update(loss_aux)
-
-        cls_score_slow = self.cls_head(x_slow, num_segs)
+        cls_score_fast = self.cls_head(x_fast.float(), num_segs)
         gt_labels = labels.squeeze()
-        loss_cls = self.cls_head.loss(cls_score_slow, gt_labels, **kwargs)
-        loss_self_supervised = self.slow_fast_contrastive_head.loss(contrastive_slow_features, contrastive_fast_features)
+        loss_cls = self.cls_head.loss(cls_score_fast, gt_labels, **kwargs)
+        loss_self_supervised = self.slow_fast_contrastive_loss(contrastive_slow_features, projected_fast_features)
         losses.update(loss_cls)
         losses.update(loss_self_supervised)
         return losses
@@ -584,6 +585,62 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             num_samples=len(next(iter(data_batch[0].values()))))
 
         return outputs
+
+    def _do_test(self, imgs):
+        """Defines the computation performed at every call when evaluation,
+        testing and gradcam."""
+        batches = imgs.shape[0]
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        num_segs = imgs.shape[0] // batches
+
+        x = self.extract_feat(imgs)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze() 
+        
+        if self.backbone_from in ['torchvision', 'timm']:
+            if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
+                # apply adaptive avg pooling
+                x = nn.AdaptiveAvgPool2d(1)(x)
+            x = x.reshape((x.shape[0], -1))
+            x = x.reshape(x.shape + (1, 1))
+
+        if self.with_neck:
+            x = [
+                each.reshape((-1, num_segs) +
+                             each.shape[1:]).transpose(1, 2).contiguous()
+                for each in x
+            ]
+            x, _ = self.neck(x)
+            x = x.squeeze(2)
+            num_segs = 1
+
+        if self.feature_extraction:
+            # perform spatial pooling
+            avg_pool = nn.AdaptiveAvgPool2d(1)
+            x = avg_pool(x)
+            # squeeze dimensions
+            x = x.reshape((batches, num_segs, -1))
+            # temporal average pooling
+            x = x.mean(axis=1)
+            return x
+
+        # When using `TSNHead` or `TPNHead`, shape is [batch_size, num_classes]
+        # When using `TSMHead`, shape is [batch_size * num_crops, num_classes]
+        # `num_crops` is calculated by:
+        #   1) `twice_sample` in `SampleFrames`
+        #   2) `num_sample_positions` in `DenseSampleFrames`
+        #   3) `ThreeCrop/TenCrop/MultiGroupCrop` in `test_pipeline`
+        #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
+
+        # should have cls_head if not extracting features
+        import ipdb; ipdb.set_trace() 
+        cls_score = self.cls_head(x.float(), num_segs)
+
+        assert cls_score.size()[0] % batches == 0
+        # calculate num_crops automatically
+        cls_score = self.average_clip(cls_score,
+                                      cls_score.size()[0] // batches)
+        return cls_score
 
 
 @RECOGNIZERS.register_module()
@@ -659,7 +716,9 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
     def __init__(self,
                  backbone,
                  cls_head=None,
-                 contrastive_head=None,
+                 vanilla_contrastive_head=None,
+                 color_contrastive_head=None,
+                 contrastive_loss=None,
                  neck=None,
                  train_cfg=None,
                  test_cfg=None):
@@ -706,9 +765,14 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             self.neck = builder.build_neck(neck)
 
         self.cls_head = builder.build_head(cls_head) if cls_head else None
-        self.two_pathway_contrastive_head = builder.build_head(contrastive_head)
-        
 
+        self.vanilla_contrastive_head = builder.build_head(vanilla_contrastive_head) 
+        self.color_contrastive_head = builder.build_head(color_contrastive_head)
+        self.color_to_vanilla_projection_layer = nn.Linear(self.color_contrastive_head.img_dim, 
+                                                self.vanilla_contrastive_head.img_dim, bias=True)
+
+
+        self.color_contrastive_loss = builder.build_loss(contrastive_loss)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
@@ -770,9 +834,15 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
 
         x_pathway_A = self.extract_feat(imgs_pathway_A) 
         x_pathway_B = self.extract_feat(imgs_pathway_B) 
+        x_pathway_A = nn.AdaptiveAvgPool2d(1)(x_pathway_A)
+        x_pathway_B = nn.AdaptiveAvgPool2d(1)(x_pathway_B)
+        x_pathway_A = x_pathway_A.squeeze()
+        x_pathway_B = x_pathway_B.squeeze()
 
-        contrastive_pathway_A_features = self.two_pathway_contrastive_head(x_pathway_A)  
-        contrastive_pathway_B_features = self.two_pathway_contrastive_head(x_pathway_B)
+        contrastive_pathway_A_features = self.vanilla_contrastive_head(x_pathway_A.float())  
+        contrastive_pathway_B_features = self.color_contrastive_head(x_pathway_B.float())
+        proj_contrastive_pathway_B_features = self.color_to_vanilla_projection_layer(contrastive_pathway_B_features)
+
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x_pathway_A.shape) == 4 and (x_pathway_A.shape[2] > 1 or x_pathway_A.shape[3] > 1):
                 # apply adaptive avg pooling
@@ -788,13 +858,12 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
             x_pathway_B = x_pathway_B.reshape((x_pathway_B.shape[0], -1))
             x_pathway_B = x_pathway_B.reshape(x_pathway_B.shape + (1, 1))            
  
-        cls_score_pathway_A = self.cls_head(x_pathway_A, num_segs)
+        cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score_pathway_A, gt_labels, **kwargs)
-        loss_self_supervised = self.two_pathway_contrastive_head.loss(contrastive_pathway_A_features, contrastive_pathway_B_features)
-        contrastive_loss = {'contrastive_loss': loss_self_supervised["slowfast_selfsupervised_loss"]}
+        loss_self_supervised = self.color_contrastive_loss(contrastive_pathway_A_features, proj_contrastive_pathway_B_features)
         losses.update(loss_cls)
-        losses.update(contrastive_loss)
+        losses.update(loss_self_supervised)
         return losses
 
     
@@ -843,6 +912,61 @@ class ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
 
         return outputs
     
+    def _do_test(self, imgs):
+        """Defines the computation performed at every call when evaluation,
+        testing and gradcam."""
+        batches = imgs.shape[0]
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        num_segs = imgs.shape[0] // batches
+
+        x = self.extract_feat(imgs)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze() 
+        
+        if self.backbone_from in ['torchvision', 'timm']:
+            if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
+                # apply adaptive avg pooling
+                x = nn.AdaptiveAvgPool2d(1)(x)
+            x = x.reshape((x.shape[0], -1))
+            x = x.reshape(x.shape + (1, 1))
+
+        if self.with_neck:
+            x = [
+                each.reshape((-1, num_segs) +
+                             each.shape[1:]).transpose(1, 2).contiguous()
+                for each in x
+            ]
+            x, _ = self.neck(x)
+            x = x.squeeze(2)
+            num_segs = 1
+
+        if self.feature_extraction:
+            # perform spatial pooling
+            avg_pool = nn.AdaptiveAvgPool2d(1)
+            x = avg_pool(x)
+            # squeeze dimensions
+            x = x.reshape((batches, num_segs, -1))
+            # temporal average pooling
+            x = x.mean(axis=1)
+            return x
+
+        # When using `TSNHead` or `TPNHead`, shape is [batch_size, num_classes]
+        # When using `TSMHead`, shape is [batch_size * num_crops, num_classes]
+        # `num_crops` is calculated by:
+        #   1) `twice_sample` in `SampleFrames`
+        #   2) `num_sample_positions` in `DenseSampleFrames`
+        #   3) `ThreeCrop/TenCrop/MultiGroupCrop` in `test_pipeline`
+        #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
+
+        # should have cls_head if not extracting features
+        cls_score = self.cls_head(x.float(), num_segs)
+
+        assert cls_score.size()[0] % batches == 0
+        # calculate num_crops automatically
+        cls_score = self.average_clip(cls_score,
+                                      cls_score.size()[0] // batches)
+        return cls_score
+    
 @RECOGNIZERS.register_module()
 class MultipleContrastiveRecognizer2D(Recognizer2D):
     def __init__(self, backbone,
@@ -853,6 +977,7 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
                  neck=None,
                  train_cfg=None,
                  test_cfg=None,
+                 num_segments=None,
                  device='cuda'):
 
         super().__init__(backbone=backbone, cls_head=cls_head, train_cfg=train_cfg, test_cfg=test_cfg)
@@ -866,19 +991,22 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
         self.contrastive_heads = [builder.build_head(contrastive_head).to(device) for _ in range(num_contrastive_heads)]  
 
 
-
     def process_pathways(self, imgs):
         batches = imgs.shape[0] 
         imgs = imgs.reshape((-1, ) + imgs.shape[2:]) 
         num_segs = imgs.shape[0] // batches 
         x = self.extract_feat(imgs) 
-        
         if self.backbone_from in ['torchvision', 'timm']:
-            if len(s.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
+            if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
                 x = nn.AdaptiveAvgPool2d(1)(x) 
         
             x = x.reshape((x.shape[0], -1)) 
             x = x.reshape(x.shape + (1, 1)) 
+        
+        elif self.backbone_from in ['mmaction2']:
+            if len(x.shape) == 4 and x.shape[1] > 1:
+                x = nn.AdaptiveAvgPool2d(1)(x) 
+                x = x.squeeze()
         
         return x 
     
@@ -892,7 +1020,7 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
         for imgs in imgs_pathways:
             x = self.process_pathways(imgs.float())
             processed_pathways.append(x) 
-         
+
         embedding_spaces = None
 
             
@@ -900,7 +1028,7 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
 
             img_embeddings = None
             for feature_img in processed_pathways:
-                h_img = self.contrastive_heads[idx](feature_img)                
+                h_img = self.contrastive_heads[idx](feature_img.float())                
                 if img_embeddings is None:
                     img_embeddings = h_img.unsqueeze(0)
                 else:
@@ -910,16 +1038,15 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
                 embedding_spaces = img_embeddings.unsqueeze(0)
             else:
                 embedding_spaces = torch.vstack((embedding_spaces, img_embeddings.unsqueeze(0)))
-
-        del processed_pathways 
+        
+        
         
         # For classification I am taking features of Q from all the embedding space
         # and feeding them to the classifier.
-        cls_features = embedding_spaces[:, -1, ...].permute(1, 0 ,2) 
-        batch_size = cls_features.shape[0]
-        cls_features = cls_features.reshape(batch_size, -1)
         
-        cls_score = self.cls_head(cls_features, -1) 
+        cls_features = processed_pathways[-1]
+        del processed_pathways 
+        cls_score = self.cls_head(cls_features.float(), -1) 
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
         loss_self_supervised = self.self_supervised_loss(embedding_spaces)
@@ -982,23 +1109,14 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
         testing and gradcam."""
         assert self.with_cls_head
         batches = imgs.shape[0]
-
-        x = self.process_pathways(imgs.float())
-        
-        cls_features = None 
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        num_segs = imgs.shape[0] // batches
+        x = self.extract_feat(imgs.float()) 
+        x = nn.AdaptiveAvgPool2d(1)(x) 
+        x = x.squeeze() 
         losses = dict()
 
-        for idx in range(len(self.contrastive_heads)):
-            
-            h_img = self.contrastive_heads[idx](x)
-            if cls_features is None:
-                cls_features = h_img.unsqueeze(0)
-            else:
-                cls_features = torch.vstack((cls_features, h_img.unsqueeze(0))) 
-        
-        cls_features = cls_features.permute(1, 0, 2)
-        cls_features = cls_features.reshape(cls_features.shape[0], -1) 
-        cls_score = self.cls_head(cls_features.float(), -1) 
+        cls_score = self.cls_head(x.float(), num_segs)
         cls_score = self.average_clip(cls_score, 
                                     cls_score.size()[0] // batches)
         return cls_score

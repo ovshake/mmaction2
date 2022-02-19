@@ -97,10 +97,10 @@ class EpicKitchensSlowFastMMSADA(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain] 
         for d in domain:
-            metadata_path = f"/home/ubuntu/users/maiti/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/abhishek/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path) 
         
-        self.datapath = '/home/ubuntu/datasets/action_recognition/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 
+        self.datapath = '/data/dataset/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 
         self.domain_to_participant_map = {"P08": "D1",  "P01": "D2", "P22": "D3"}
         super().__init__(ann_file=None, pipeline=slow_pipeline, test_mode=test_mode, sample_by_class=sample_by_class)
         self.filename_tmpl = filename_tmpl
@@ -132,7 +132,7 @@ class EpicKitchensSlowFastMMSADA(BaseDataset):
                     )
                 )
         
-        return video_infos 
+        return video_infos
 
     def prepare_train_frames(self, idx):
         results = copy.deepcopy(self.video_infos[idx])
@@ -165,10 +165,10 @@ class EpicKitchensTemporalSpatialMMSADA(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain] 
         for d in domain:
-            metadata_path = f"/home/ubuntu/users/maiti/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/abhishek/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path) 
         
-        self.datapath = '/home/ubuntu/datasets/action_recognition/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 
+        self.datapath = '/data/dataset/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 
         self.domain_to_participant_map = {"P08": "D1",  "P01": "D2", "P22": "D3"}
         super().__init__(ann_file=None, pipeline=pathway_A, test_mode=test_mode, sample_by_class=sample_by_class)
         self.filename_tmpl = filename_tmpl

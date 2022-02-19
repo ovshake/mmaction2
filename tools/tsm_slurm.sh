@@ -1,5 +1,5 @@
 #!/bin/bash 
-#SBATCH --job-name=mutlicontrastive-learning
+#SBATCH --job-name=baseline
 #SBATCH --gres=gpu:4
 #SBATCH -o /data/abhishek/outputs/slurm.out 
 #SBATCH -e /data/abhishek/outputs/slurm.err 
@@ -13,14 +13,19 @@ conda activate action-dg
 
 
 
-exp_name="multicontrastive-learning-speed-fp16-bn-100e"
-exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_test"
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_k400_ekmmsada_multiple_contrastive_space_only_speed.py"
+exp_name="tsm-baseline-mmsada"
+exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
 
 
-bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='D1' data.val.domain='D1' --validate
+bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='D1' data.val.domain='D1' total_epochs=100 --validate
 
-# bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D2_test_D2 data.train.domain='D2' data.val.domain='D2' --validate
+
+bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D2_test_D2 data.train.domain='D2' data.val.domain='D2' total_epochs=100 --validate
+
+
+bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D3_test_D3 data.train.domain='D3' data.val.domain='D3' total_epochs=100 --validate
+
 
 
 

@@ -268,6 +268,50 @@ class SampleFrames:
 
 
 @PIPELINES.register_module()
+class RandomFrequencySampleFrames(SampleFrames):
+    def __call__(self, results, frame_interval=None):
+        """Perform the SampleFrames loading.
+
+        Args:
+            results (dict): The resulting dict to be modified and passed
+                to the next transform in pipeline.
+        """
+
+        assert frame_interval is not None, '`frame_interval` cannot be None'
+        total_frames = results['total_frames']
+        self.frame_interval = frame_interval
+        clip_offsets = self._sample_clips(total_frames)
+        frame_inds = clip_offsets[:, None] + np.arange(
+            self.clip_len)[None, :] * self.frame_interval
+        frame_inds = np.concatenate(frame_inds)
+
+        if self.temporal_jitter:
+            perframe_offsets = np.random.randint(
+                self.frame_interval, size=len(frame_inds))
+            frame_inds += perframe_offsets
+
+        frame_inds = frame_inds.reshape((-1, self.clip_len))
+        if self.out_of_bound_opt == 'loop':
+            frame_inds = np.mod(frame_inds, total_frames)
+        elif self.out_of_bound_opt == 'repeat_last':
+            safe_inds = frame_inds < total_frames
+            unsafe_inds = 1 - safe_inds
+            last_ind = np.max(safe_inds * frame_inds, axis=1)
+            new_inds = (safe_inds * frame_inds + (unsafe_inds.T * last_ind).T)
+            frame_inds = new_inds
+        else:
+            raise ValueError('Illegal out_of_bound option.')
+
+        start_index = results['start_index']
+        frame_inds = np.concatenate(frame_inds) + start_index
+        results['frame_inds'] = frame_inds.astype(np.int)
+        results['clip_len'] = self.clip_len
+        results['frame_interval'] = self.frame_interval
+        results['num_clips'] = self.num_clips
+        return results
+
+
+@PIPELINES.register_module()
 class UntrimmedSampleFrames:
     """Sample frames from the untrimmed video.
 
