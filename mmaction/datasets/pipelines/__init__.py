@@ -4,7 +4,8 @@ from .augmentations import (AudioAmplify, CenterCrop, ColorJitter, Flip, Fuse,
                             MultiScaleCrop, Normalize, PytorchVideoTrans,
                             RandomCrop, RandomRescale, RandomResizedCrop,
                             RandomScale, Resize, TenCrop, ThreeCrop,
-                            TorchvisionTrans, RandomSampleColorJitter)
+                            TorchvisionTrans, RandomSampleColorJitter, 
+                            AugSelfColorJitter)
 from .compose import Compose
 from .formating import (Collect, FormatAudioShape, FormatGCNInput, FormatShape,
                         ImageToTensor, Rename, ToDataContainer, ToTensor,
@@ -39,5 +40,5 @@ __all__ = [
     'UniformSampleFrames', 'PoseDecode', 'LoadKineticsPose',
     'GeneratePoseTarget', 'PIMSInit', 'PIMSDecode', 'TorchvisionTrans',
     'PytorchVideoTrans', 'PoseNormalize', 'FormatGCNInput', 'PaddingWithLoop', 
-    'RandomFrequencySampleFrames', 'RandomSampleColorJitter'
+    'RandomFrequencySampleFrames', 'RandomSampleColorJitter', 'AugSelfColorJitter'
 ]

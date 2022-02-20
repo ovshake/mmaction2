@@ -76,7 +76,40 @@ class ContrastiveHead(nn.Module):
         normal_init(self.encoder, std=self.init_std)
 
 
+@HEADS.register_module()
+class AugSelfHead(nn.Module):
+    def __init__(self,
+                 feature_size,
+                 num_pathways=2, 
+                 num_segments=16,
+                 init_std=0.001,
+                 middle_layer_dim=1024,
+                 img_dim=512,
+                 **kwargs):
 
+        super().__init__()
+        self.num_pathways = num_pathways
+        self.num_segments = num_segments
+        self.fc1 = nn.Linear(feature_size * self.num_pathways * self.num_segments, middle_layer_dim, bias=True)
+        self.relu_1 = nn.ReLU(inplace=True) 
+        self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
+        self.relu_2 = nn.ReLU(inplace=True) 
+        self.tanh_2 = nn.Tanh() 
+        self.encoder = nn.Sequential(self.fc1, self.relu_1, self.fc2, self.relu_2, self.tanh_2)
+        self.init_std = init_std
+        self.img_dim = img_dim
+        self.init_weights() 
+        
+
+
+    def forward(self, features):
+        features = rearrange(features, '(b c) e -> b (c e)', c=self.num_segments) 
+        features = self.encoder(features) 
+        return features
+    
+    def init_weights(self):
+        """Initiate the parameters from scratch."""
+        normal_init(self.encoder, std=self.init_std)
 
 @HEADS.register_module()
 class TwoPathwayContrastiveHead(nn.Module):

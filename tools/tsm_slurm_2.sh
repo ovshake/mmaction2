@@ -8,9 +8,9 @@
 . /data/abhishek/anaconda3/etc/profile.d/conda.sh 
 conda activate action-dg 
 
-exp_name="slow-fast-moco-m-99-q-4096"
+exp_name="colorjitter-augself"
 exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_slowfast_moco_contrastivehead_ekmmsada_rgb.py"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_augself_ekmmsada_rgb.py"
 
 
 bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='D1' data.val.domain='D1' total_epochs=100 --validate
