@@ -3,21 +3,17 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
-# fp16 training 
-fp16 = dict()
-
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
-                norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=16, num_classes=8))
+            cls_head=dict(num_segments=16, num_classes=38))
 
 # dataset settings
-dataset_type = 'EpicKitchensMMSADA'
+dataset_type = 'Kinetics400UCFHMDB'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 train_pipeline = [
@@ -46,22 +42,23 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=22,
+    videos_per_gpu=8,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
-        domain='D1',
+        domain='kinetics',
         pipeline=train_pipeline, 
         sample_by_class=True),
     val=dict(
         type=dataset_type,
-        domain='D1',
+        domain='kinetics',
         pipeline=val_pipeline), 
     test=dict(
         type=dataset_type,
-        domain='D2',
-        pipeline=val_pipeline
+        domain='kinetics',
+        pipeline=val_pipeline,
+        filename_tmpl='img_{:05d}.jpg',
     ))
 
 evaluation = dict(
@@ -69,12 +66,12 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (22 / 8) * (4 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (8 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=5)
-work_dir = './work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/'
+work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/'
 total_epochs = 100

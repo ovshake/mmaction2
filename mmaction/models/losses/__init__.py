@@ -7,10 +7,13 @@ from .hvu_loss import HVULoss
 from .nll_loss import NLLLoss
 from .ohem_hinge_loss import OHEMHingeLoss
 from .ssn_loss import SSNLoss
-from .slowfast_selfsupervised_loss import SlowFastSelfSupervisedLoss
+from .slowfast_selfsupervised_loss import SlowFastSelfSupervisedLoss, ContrastiveLoss
+from .multiple_contrastive_loss import MultipleContrastiveLoss
+from .moco_loss import MocoLoss
 
 __all__ = [
     'BaseWeightedLoss', 'CrossEntropyLoss', 'NLLLoss', 'BCELossWithLogits',
     'BinaryLogisticRegressionLoss', 'BMNLoss', 'OHEMHingeLoss', 'SSNLoss',
-    'HVULoss', 'SlowFastSelfSupervisedLoss'
+    'HVULoss', 'SlowFastSelfSupervisedLoss', 'MultipleContrastiveLoss', 
+    'ContrastiveLoss', 'MocoLoss'
 ]
