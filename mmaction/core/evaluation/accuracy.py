@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 
-
 def confusion_matrix(y_pred, y_real, normalize=None):
     """Compute confusion matrix.
 
@@ -562,3 +561,37 @@ def average_precision_at_temporal_iou(ground_truth,
                                                   recall_cumsum[t_idx, :])
 
     return ap
+
+
+
+def ece_score(y_pred, y_test, n_bins=10):
+    """
+    Taken from: https://github.com/sirius8050/Expected-Calibration-Error/blob/master/ECE.py
+    
+    """
+    y_pred = np.array(y_pred)
+    y_test = np.array(y_test)
+    if y_test.ndim > 1:
+        y_test = np.argmax(y_test, axis=1)
+    y_pred_index = np.argmax(y_pred, axis=1)
+    y_pred_value = []
+    for i in range(y_pred.shape[0]):
+        y_pred_value.append(y_pred[i, y_pred_index[i]])
+    y_pred_value = np.array(y_pred_value)
+    acc, conf = np.zeros(n_bins), np.zeros(n_bins)
+    Bm = np.zeros(n_bins)
+    for m in range(n_bins):
+        a, b = m / n_bins, (m + 1) / n_bins
+        for i in range(y_pred.shape[0]):
+            if y_pred_value[i] > a and y_pred_value[i] <= b:
+                Bm[m] += 1
+                if y_pred_index[i] == y_test[i]:
+                    acc[m] += 1
+                conf[m] += y_pred_value[i]
+        if Bm[m] != 0:
+            acc[m] = acc[m] / Bm[m]
+            conf[m] = conf[m] / Bm[m]
+    ece = 0
+    for m in range(n_bins):
+        ece += Bm[m] * np.abs((acc[m] - conf[m]))
+    return ece / sum(Bm)

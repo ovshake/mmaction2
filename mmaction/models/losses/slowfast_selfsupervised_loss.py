@@ -71,8 +71,9 @@ class ContrastiveLoss(BaseWeightedLoss):
 
 
     def _forward(self, slow_features, fast_features):
-        slow_features = concat_all_gather(slow_features) 
-        fast_features = concat_all_gather(fast_features)
+        if dist.is_initialized():
+            slow_features = concat_all_gather(slow_features) 
+            fast_features = concat_all_gather(fast_features)
         batch_size = slow_features.shape[0]
         similarity = self._calculate_cosine_similarity(slow_features, fast_features) 
         similarity = similarity / self.temperature

@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch.nn as nn
+import torch.distributed as dist
 from mmcv.cnn import ConvModule, constant_init, kaiming_init
 from mmcv.runner import _load_checkpoint, load_checkpoint
 from mmcv.utils import _BatchNorm
@@ -45,6 +46,7 @@ class BasicBlock(nn.Module):
                  with_cp=False):
         super().__init__()
         assert style in ['pytorch', 'caffe']
+        
         self.conv1 = ConvModule(
             inplanes,
             planes,
@@ -349,8 +351,14 @@ class ResNet(nn.Module):
                  partial_bn=False,
                  with_cp=False):
         super().__init__()
+        
+        if dist.is_initialized():
+            norm_cfg['type'] = 'SyncBN'
+        else:
+            norm_cfg['type'] = 'BN2d'
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for resnet')
+        
         self.depth = depth
         self.in_channels = in_channels
         self.pretrained = pretrained

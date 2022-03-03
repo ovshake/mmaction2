@@ -515,22 +515,6 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
         contrastive_fast_features = self.fast_contrastive_head(x_fast.float())
         projected_fast_features = self.fast_to_slow_projection_head(contrastive_fast_features)
 
-
-        if self.backbone_from in ['torchvision', 'timm']:
-            if len(x_slow.shape) == 4 and (x_slow.shape[2] > 1 or x_slow.shape[3] > 1):
-                # apply adaptive avg pooling
-                x_slow = nn.AdaptiveAvgPool2d(1)(x_slow)
-
-            if len(x_fast.shape) == 4 and (x_fast.shape[2] > 1 or x_fast.shape[3] > 1):
-                # apply adaptive avg pooling
-                x_fast = nn.AdaptiveAvgPool2d(1)(x_fast)
-            
-            x_slow = x_slow.reshape((x_slow.shape[0], -1))
-            x_slow = x_slow.reshape(x_slow.shape + (1, 1))
-
-            x_fast = x_fast.reshape((x_fast.shape[0], -1))
-            x_fast = x_fast.reshape(x_fast.shape + (1, 1))            
-
         
         cls_score_fast = self.cls_head(x_fast.float(), num_segs)
         gt_labels = labels.squeeze()
@@ -633,7 +617,6 @@ class SlowFastSelfSupervisedContrastiveHeadRecognizer2D(Recognizer2D):
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
 
         # should have cls_head if not extracting features
-        import ipdb; ipdb.set_trace() 
         cls_score = self.cls_head(x.float(), num_segs)
 
         assert cls_score.size()[0] % batches == 0

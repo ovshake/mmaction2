@@ -24,7 +24,8 @@ model = dict(
                         in_channels=2048), 
             augself_head=dict(type='AugSelfHead',
                                 feature_size=2048, 
-                                img_dim=4))
+                                img_dim=4), 
+            augself_loss_weight=10.)
 
 # dataset settings
 train_dataset = 'D1'
@@ -73,7 +74,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=6,
+    videos_per_gpu=11,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -97,7 +98,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (4 / 8) * (6 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (11 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

@@ -1,6 +1,6 @@
 #!/bin/bash 
-#SBATCH --job-name=color-jitter-moco-m-99-q-4096
 #SBATCH --gres=gpu:4
+#SBATCH -w node3
 #SBATCH -o /data/abhishek/outputs/slurm_3.out 
 #SBATCH -e /data/abhishek/outputs/slurm_3.err 
 #SBATCH -t 13-0:00
@@ -9,9 +9,9 @@
 . /data/abhishek/anaconda3/etc/profile.d/conda.sh 
 conda activate action-dg 
 
-exp_name="color-jitter-moco-m-99-q-4096"
+exp_name="color-jitter-augself-contrastive-10x"
 exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_moco_contrastivehead_ekmmsada_rgb.py"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_augself_contrastivehead_ekmmsada_rgb.py"
 
 
 bash /data/abhishek/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/abhishek/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='D1' data.val.domain='D1' total_epochs=100 --validate

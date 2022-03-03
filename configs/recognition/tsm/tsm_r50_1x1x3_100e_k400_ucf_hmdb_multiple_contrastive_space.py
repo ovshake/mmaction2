@@ -6,6 +6,7 @@ _base_ = [
 workflow = [('train', 1)]
 # fp16 training 
 fp16 = dict()
+
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
@@ -13,12 +14,17 @@ model = dict(
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=8, num_classes=38, spatial_type=None, in_channels=1536), 
-            num_contrastive_heads=4, 
-            self_supervised_loss=dict(type='MultipleContrastiveLoss', all_way=True), 
-            contrastive_head=dict(type='TwoPathwayContrastiveHead',
-                                feature_size=2048 * 7 * 7))
+            cls_head=dict(num_segments=8, 
+                        num_classes=38, 
+                        spatial_type=None, 
+                        in_channels=2048), 
+            num_contrastive_heads=3, 
+            self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
+            contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=8,
+                                feature_size=2048))
 
 # dataset settings
 dataset_type = 'RawframeDataset'
@@ -87,12 +93,12 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=8,
+    videos_per_gpu=10,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=train_dataset_type,
-        domain='D1',
+        domain='kinetics',
         pipelines=[fast_colorjitter_pipeline,
         colorjitter_pipeline,
         fast_pipeline,
@@ -102,11 +108,11 @@ data = dict(
         ),
     val=dict(
         type=val_dataset_type,
-        domain='D2',
+        domain='kinetics',
         pipeline=val_pipeline), 
     test=dict(
         type=val_dataset_type,
-        domain='D2',
+        domain='kinetics',
         pipeline=val_pipeline,
         filename_tmpl='img_{:05d}.jpg',
     ))

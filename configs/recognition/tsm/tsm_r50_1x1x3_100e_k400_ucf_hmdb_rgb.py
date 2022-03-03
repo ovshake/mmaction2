@@ -12,6 +12,9 @@ model = dict(
                 shift_div=8),
             cls_head=dict(num_segments=16, num_classes=38))
 
+#fp16 enabled
+fp16 = dict()
+
 # dataset settings
 dataset_type = 'Kinetics400UCFHMDB'
 img_norm_cfg = dict(
@@ -42,17 +45,17 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=8,
+    videos_per_gpu=21,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
-        domain='kinetics',
+        domain='ucf-hmdb',
         pipeline=train_pipeline, 
         sample_by_class=True),
     val=dict(
         type=dataset_type,
-        domain='kinetics',
+        domain='ucf-hmdb',
         pipeline=val_pipeline), 
     test=dict(
         type=dataset_type,
@@ -66,7 +69,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (4 / 8) * (8 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (21 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

@@ -3,17 +3,34 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
+# fp16 training 
+fp16 = dict()
+
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
+fast_clip_len = 16 
+slow_clip_len = 8
 model = dict(
             type='SlowFastSelfSupervisedContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=16, num_classes=38), 
-            contrastive_head=dict(type='SlowFastContrastiveHead',
-                                feature_size=2048 * 7 * 7))
+            cls_head=dict(num_segments=16, 
+                        num_classes=38, 
+                        in_channels=2048, 
+                        spatial_type=None), 
+            contrastive_loss=dict(type='ContrastiveLoss', 
+                            name='slowfast'),
+            slow_contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=slow_clip_len,
+                                feature_size=2048
+                                ), 
+            fast_contrastive_head=dict(type='ContrastiveHead', 
+                                num_segments=fast_clip_len, 
+                                feature_size=2048
+                                ))
 
 # dataset settings
 dataset_type = 'RawframeDataset'
@@ -22,7 +39,7 @@ val_dataset_type = 'Kinetics400UCFHMDB'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 slow_train_pipeline = [
-    dict(type='SampleFrames', clip_len=16, frame_interval=1, num_clips=1),
+    dict(type='SampleFrames', clip_len=slow_clip_len, frame_interval=2, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
@@ -33,7 +50,7 @@ slow_train_pipeline = [
 ]
 
 fast_train_pipeline = [
-    dict(type='SampleFrames', clip_len=16, frame_interval=2, num_clips=1),
+    dict(type='SampleFrames', clip_len=fast_clip_len, frame_interval=1, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
@@ -58,25 +75,25 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=3,
+    videos_per_gpu=12,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=train_dataset_type,
-        domain='D1',
+        domain='kinetics',
         sample_by_class=True,
         pathway_A_pipeline=slow_train_pipeline, 
         pathway_B_pipeline=fast_train_pipeline),
     val=dict(
         type=val_dataset_type,
-        domain='D2',
+        domain='kinetics',
         pipeline=val_pipeline), 
     test=dict(
         type=val_dataset_type,
-        domain='D2',
-        pipeline=val_pipeline,
-        filename_tmpl='img_{:05d}.jpg',
+        domain='kinetics',
+        pipeline=val_pipeline
     ))
+
 
 evaluation = dict(
     interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])

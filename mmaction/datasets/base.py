@@ -13,7 +13,7 @@ from torch.utils.data import Dataset
 
 from ..core import (mean_average_precision, mean_class_accuracy,
                     mmit_mean_average_precision, top_k_accuracy, 
-                    confusion_matrix)
+                    confusion_matrix, ece_score)
 from .pipelines import Compose
 
 
@@ -180,7 +180,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         metrics = metrics if isinstance(metrics, (list, tuple)) else [metrics]
         allowed_metrics = [
             'top_k_accuracy', 'mean_class_accuracy', 'mean_average_precision',
-            'mmit_mean_average_precision', 'confusion_matrix'
+            'mmit_mean_average_precision', 'confusion_matrix', 'ece_score',
         ]
 
         for metric in metrics:
@@ -249,7 +249,14 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 log_msg = f'\nCONFUSION MATRIX\n{conf_mat}\n'
                 print_log(log_msg, logger=logger)
                 continue
-
+            
+            if metric == 'ece_score':
+                # import ipdb; ipdb.set_trace() 
+                y_pred_logits = np.array(results)
+                ece = ece_score(y_pred_logits, results)
+                log_msg = f"\nExpected Calibration Error: {ece:.4f}\n"
+                print_log(log_msg, logger=logger) 
+                continue 
 
         return eval_results
 

@@ -98,7 +98,8 @@ class MultipleContrastiveLoss(BaseWeightedLoss):
     def _forward(self, all_embedding_features):
         assert len(all_embedding_features) > 0, 'Atleast features from one embedding space required'
         num_embedding_space = all_embedding_features.shape[0]
-        all_embedding_features = concat_all_gather(all_embedding_features)
+        if dist.is_initialized():
+            all_embedding_features = concat_all_gather(all_embedding_features)
         loss = 0.
         for idx_espace in range(1, num_embedding_space):
             loss += - self._calculate_leave_one_out_variant_info_nce(all_embedding_features[idx_espace]) 
