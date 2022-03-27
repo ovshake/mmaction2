@@ -57,7 +57,7 @@ class ContrastiveLoss(BaseWeightedLoss):
         super().__init__()
         self.loss_weight = loss_weight
         self.temperature = temperature
-        self.name = None 
+        self.name = name  
     
     def _calculate_cosine_similarity(self, a, b, eps=1e-8):
         """

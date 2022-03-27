@@ -1,63 +1,30 @@
+
 section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
 
-exp_name="colorjitter-augself-10x"
+exp_name="order-contrastive"
 
 
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_augself_ekmmsada_rgb.py"
+config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_order_contrastivehead_ekmmsada_rgb.py"
 
 
 work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
 
-d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/best_top1_acc_epoch_50.pth"
+d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/best_top1_acc_epoch_75.pth"
 
 
-d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/best_top1_acc_epoch_45.pth"
-
-d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/best_top1_acc_epoch_50.pth"
+d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/best_top1_acc_epoch_55.pth"
 
 
-python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
+d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/best_top1_acc_epoch_95.pth"
 
-python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D2' 
 
-python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
+python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D3/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D3' 
 
-python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D1/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D1' 
 
+python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D3/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D3' 
 
-python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D1/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D1' 
 
-python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
-
-
-
-section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
-
-exp_name="color-jitter-augself-contrastive-10x"
-
-
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_colorspatial_augself_contrastivehead_ekmmsada_rgb.py"
-
-
-work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
-
-d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/best_top1_acc_epoch_90.pth"
-
-
-d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/best_top1_acc_epoch_45.pth"
-
-d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/best_top1_acc_epoch_45.pth"
-
-
-python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
-
-python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
-
-python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
-
-python tools/test.py $config $d2_ckpt --out "$work_dir/train_D2_test_D3/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D3' 
-
-
-python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D1/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D1' 
-
-python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/output.pkl" --eval top_k_accuracy --cfg-options data.test.domain='D2' 
+python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/output.pkl" --eval top_k_accuracy  --cfg-options data.test.domain='D2' 

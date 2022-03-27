@@ -114,7 +114,8 @@ class SampleFrames:
                  out_of_bound_opt='loop',
                  test_mode=False,
                  start_index=None,
-                 keep_tail_frames=False):
+                 keep_tail_frames=False, 
+                 reverse=False):
 
         self.clip_len = clip_len
         self.frame_interval = frame_interval
@@ -124,6 +125,7 @@ class SampleFrames:
         self.out_of_bound_opt = out_of_bound_opt
         self.test_mode = test_mode
         self.keep_tail_frames = keep_tail_frames
+        self.reverse = reverse
         assert self.out_of_bound_opt in ['loop', 'repeat_last']
 
         if start_index is not None:
@@ -213,7 +215,6 @@ class SampleFrames:
             clip_offsets = self._get_test_clips(num_frames)
         else:
             clip_offsets = self._get_train_clips(num_frames)
-
         return clip_offsets
 
     def __call__(self, results):
@@ -250,6 +251,8 @@ class SampleFrames:
         start_index = results['start_index']
         frame_inds = np.concatenate(frame_inds) + start_index
         results['frame_inds'] = frame_inds.astype(np.int)
+        if self.reverse:
+            results['frame_inds'] = np.flip(results['frame_inds'], axis=-1)
         results['clip_len'] = self.clip_len
         results['frame_interval'] = self.frame_interval
         results['num_clips'] = self.num_clips

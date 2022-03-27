@@ -141,3 +141,5 @@ mmaction/.mim
 
 # wandb 
 wandb/
+
+*.output
