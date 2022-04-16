@@ -10,7 +10,7 @@ fp16 = dict()
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
-            type='MultipleContrastiveRecognizer2D',
+            type='MultipleContrastiveAugselfRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
@@ -21,6 +21,11 @@ model = dict(
                         spatial_type=None, 
                         in_channels=2048), 
             num_contrastive_heads=3, 
+            augself_head=dict(type='AugSelfHead',
+                                feature_size=2048, 
+                                num_segments=8,
+                                img_dim=4),
+            augself_loss_weight=10.,
             self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
             contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=8,
@@ -38,10 +43,10 @@ colorjitter_pipeline = [
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter'),
+    dict(type='AugSelfColorJitter'),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
-    dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
+    dict(type='Collect', keys=['imgs', 'label'], meta_keys=['brightness', 'contrast', 'saturation', 'hue']),
     dict(type='ToTensor', keys=['imgs', 'label'])
 ]
 vanilla_pipeline = [
@@ -93,7 +98,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=12,
+    videos_per_gpu=8,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -122,12 +127,12 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (8 / 8) * (4 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
-checkpoint_config = dict(interval=10)
+checkpoint_config = dict(interval=5)
 work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/slow-fast-contrastive-head/train_D1_test_D2/'
 total_epochs = 100

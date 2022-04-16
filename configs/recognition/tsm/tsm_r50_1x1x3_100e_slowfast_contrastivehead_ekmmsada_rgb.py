@@ -95,7 +95,7 @@ data = dict(
     ))
 
 evaluation = dict(
-    interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy'])
+    interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy', 'ece_score'])
 
 # optimizer
 num_gpus = 4

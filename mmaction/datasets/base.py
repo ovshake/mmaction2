@@ -254,6 +254,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 # import ipdb; ipdb.set_trace() 
                 y_pred_logits = np.array(results)
                 ece = ece_score(y_pred_logits, results)
+                eval_results['ece'] = ece 
                 log_msg = f"\nExpected Calibration Error: {ece:.4f}\n"
                 print_log(log_msg, logger=logger) 
                 continue 
