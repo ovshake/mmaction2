@@ -87,3 +87,44 @@ class ContrastiveLoss(BaseWeightedLoss):
         else:
             ret_dict = {f'{self.name}_contrastive_loss': self.loss_weight * loss} 
         return ret_dict 
+
+@LOSSES.register_module()
+class SingleInstanceContrastiveLoss(BaseWeightedLoss):
+    def __init__(self, loss_weight=1.0, temperature=0.5, name=None):
+        super().__init__()
+        self.loss_weight = loss_weight
+        self.temperature = temperature
+        self.name = name  
+    
+    def _calculate_cosine_similarity(self, a, b, eps=1e-8):
+        """
+        added eps for numerical stability
+        """
+        a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
+        a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
+        b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
+        sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
+        return sim_mt
+
+
+    def _forward(self, features_a, features_b):
+        if dist.is_initialized():
+            slow_features = concat_all_gather(features_a) 
+            fast_features = concat_all_gather(features_b)
+        similarity = self._calculate_cosine_similarity(features_a, features_b)
+        similarity = similarity / self.temperature
+        similarity = similarity.exp()
+        # Isolating the diagonal elements because we expect the positive
+        # elements to be in the diagonals
+        diag_elems = torch.diagonal(similarity, 0)
+        row_sum = similarity.sum(0)  # Taking sum across row
+        col_sum = similarity.sum(1)  # Taking sum across columns
+        loss = -(
+            torch.log(diag_elems / row_sum + 1e-8).sum()
+            + torch.log(diag_elems / col_sum + 1e-8).sum()
+        )
+        if not self.name:
+            ret_dict = {'contrastive_loss': loss} 
+        else:
+            ret_dict = {f'{self.name}_contrastive_loss': loss} 
+        return ret_dict 
