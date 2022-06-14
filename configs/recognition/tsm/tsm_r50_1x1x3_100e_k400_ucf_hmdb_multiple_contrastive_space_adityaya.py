@@ -17,19 +17,19 @@ model = dict(
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
             cls_head=dict(num_segments=8, 
-                        num_classes=8, 
+                        num_classes=25, 
                         spatial_type=None, 
                         in_channels=2048), 
             num_contrastive_heads=3, 
-            self_supervised_loss=dict(type='MultipleContrastiveSingleInstanceLoss'), 
+            self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
             contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=8,
                                 feature_size=2048))
 
 # dataset settings
 dataset_type = 'RawframeDataset'
-train_dataset_type = 'EpicKitchensMultipleContrastiveSpaces'
-val_dataset_type = 'EpicKitchensMMSADA'
+train_dataset_type = 'Kinetics400UCFHMDBMultipleContrastiveSpaces'
+val_dataset_type = 'Kinetics400UCFHMDB'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 
@@ -93,12 +93,12 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=12,
+    videos_per_gpu=10,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=train_dataset_type,
-        domain='D1',
+        domain='activitynet',
         pipelines=[fast_colorjitter_pipeline,
         colorjitter_pipeline,
         fast_pipeline,
@@ -108,13 +108,13 @@ data = dict(
         ),
     val=dict(
         type=val_dataset_type,
-        domain='D1',
+        domain='activitynet',
         pipeline=val_pipeline), 
     test=dict(
         type=val_dataset_type,
-        domain='D1',
+        domain='activitynet',
         pipeline=val_pipeline,
-        filename_tmpl='frame_{:010d}.jpg',
+        filename_tmpl='img_{:05d}.jpg',
     ))
 
 evaluation = dict(
@@ -122,12 +122,12 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (8 / 8) * (4 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
-checkpoint_config = dict(interval=10)
-work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/slow-fast-contrastive-head/train_D1_test_D2/'
+checkpoint_config = dict(interval=5)
+work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/multiple-constrastive/train_D1_test_D1/'
 total_epochs = 100

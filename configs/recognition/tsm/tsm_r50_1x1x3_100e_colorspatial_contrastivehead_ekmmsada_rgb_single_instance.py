@@ -12,7 +12,7 @@ clip_len = 16
 
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
-            type='ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D',
+            type='ColorSpatialSelfSupervised1ContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
@@ -22,15 +22,11 @@ model = dict(
                         num_classes=8, 
                         spatial_type=None, 
                         in_channels=2048), 
-            vanilla_contrastive_head=dict(type='ContrastiveHead',
+            contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=clip_len,
                                 feature_size=2048), 
-            color_contrastive_head=dict(type='ContrastiveHead',
-                                num_segments=clip_len,
-                                feature_size=2048), 
-            contrastive_loss=dict(type='SingleInstanceContrastiveLoss', 
-                                name='color', 
-                                loss_weight=0.1))
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2', 
+                                name='color'))
 
 # dataset settings
 train_dataset = 'D1'

@@ -1023,7 +1023,6 @@ class MultipleContrastiveRecognizer2D(Recognizer2D):
                 embedding_spaces = torch.vstack((embedding_spaces, img_embeddings.unsqueeze(0)))
         
         
-        
         # For classification I am taking features of Q from all the embedding space
         # and feeding them to the classifier.
         

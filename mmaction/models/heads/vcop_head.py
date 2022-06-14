@@ -16,7 +16,7 @@ class VCOPHead(nn.Module):
     def __init__(self,
                  num_clips,
                  feature_size,
-                 vcop_loss=dict(type='CrossEntropyLoss'),
+                 vcop_loss=dict(type='CrossEntropyLoss', loss_weight=1.0),
                  **kwargs):
         
         super().__init__()
@@ -53,7 +53,7 @@ class VCOPHead(nn.Module):
         h = F.softmax(h, dim=1)
         if return_loss:
             vcop_loss = self.vcop_loss(h, torch.tensor(order_index).repeat(h.size()[0]).to(h.device)) 
-            return {"vcop_loss": vcop_loss * self.vcop_loss.loss_weight}
+            return {"vcop_loss": vcop_loss}
         return h
 
     def order_class_index(self, order):

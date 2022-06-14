@@ -26,7 +26,7 @@ model = dict(
                                 num_segments=8,
                                 img_dim=4),
             augself_loss_weight=10.,
-            self_supervised_loss=dict(type='MultipleContrastiveLoss'), 
+            self_supervised_loss=dict(type='MultipleContrastiveSingleInstanceLoss'), 
             contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=8,
                                 feature_size=2048))

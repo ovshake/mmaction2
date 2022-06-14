@@ -22,8 +22,7 @@ model = dict(
                         in_channels=2048, 
                         spatial_type=None), 
             contrastive_loss=dict(type='SingleInstanceContrastiveLoss', 
-                            name='slowfast', 
-                            loss_weight=0.1),
+                            name='slowfast'),
             slow_contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=slow_clip_len,
                                 feature_size=2048

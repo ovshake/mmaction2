@@ -28,7 +28,7 @@ model = dict(
             color_contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=clip_len,
                                 feature_size=2048), 
-            contrastive_loss=dict(type='ContrastiveLoss', 
+            contrastive_loss=dict(type='SingleInstanceContrastiveLoss', 
                                 name='order-contrastive'))
 
 # dataset settings

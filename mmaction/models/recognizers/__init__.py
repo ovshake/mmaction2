@@ -8,9 +8,12 @@ from .recognizer3d import Recognizer3D
 from .mocorecognizer2d import SlowFastSelfSupervisedMOCORecognizer2D, ColorSpatialSelfSupervisedMOCOContrastiveHeadRecognizer2D
 
 from .augself_recognizer import ColorSpatialAugSelfSupervisedRecognizer2D, ColorSpatialAugSelfSupervisedContrastiveHeadRecognizer2D, MultipleContrastiveAugselfRecognizer2D
+
+from .color_contrastive_recognizer2d import ColorSpatialSelfSupervised1ContrastiveHeadRecognizer2D
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D',
             'SlowFastSelfSupervisedContrastiveHeadRecognizer2D', 
             'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D', 
             'MultipleContrastiveRecognizer2D', 'SlowFastSelfSupervisedMOCORecognizer2D', 
             'ColorSpatialSelfSupervisedMOCOContrastiveHeadRecognizer2D', 
-            'ColorSpatialAugSelfSupervisedRecognizer2D', 'ColorSpatialAugSelfSupervisedContrastiveHeadRecognizer2D', 'MultipleContrastiveAugselfRecognizer2D']
+            'ColorSpatialAugSelfSupervisedRecognizer2D', 'ColorSpatialAugSelfSupervisedContrastiveHeadRecognizer2D', 'MultipleContrastiveAugselfRecognizer2D', 'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D', 
+            'ColorSpatialSelfSupervised1ContrastiveHeadRecognizer2D']

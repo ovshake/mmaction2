@@ -128,3 +128,61 @@ class SingleInstanceContrastiveLoss(BaseWeightedLoss):
         else:
             ret_dict = {f'{self.name}_contrastive_loss': loss} 
         return ret_dict 
+
+
+
+@LOSSES.register_module()
+class SingleInstanceContrastiveLossv2(BaseWeightedLoss):
+    def __init__(self, loss_weight=1.0, temperature=0.5, name=None):
+        super().__init__()
+        self.loss_weight = loss_weight
+        self.temperature = temperature
+        self.name = name  
+    
+    def _calculate_cosine_similarity(self, a, b, eps=1e-8):
+        """
+        added eps for numerical stability
+        """
+        a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
+        a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
+        b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
+        sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
+        return sim_mt
+
+
+    def _forward(self, features_a, features_b):
+        if dist.is_initialized():
+            slow_features = concat_all_gather(features_a) 
+            fast_features = concat_all_gather(features_b)
+        batch_size = features_a.shape[0]
+        mask = torch.eye(batch_size, dtype=torch.bool)
+        cross_similarity = self._calculate_cosine_similarity(features_a, features_b)
+        a_similarity = self._calculate_cosine_similarity(features_a, features_a) 
+        a_similarity[mask] = 0. 
+        b_similarity = self._calculate_cosine_similarity(features_b, features_b) 
+        b_similarity[mask] = 0.
+
+        cross_similarity = cross_similarity / self.temperature
+        cross_similarity = cross_similarity.exp()
+
+
+        a_similarity = a_similarity / self.temperature 
+        a_similarity = a_similarity.exp() 
+
+        b_similarity = b_similarity / self.temperature 
+        b_similarity = b_similarity.exp() 
+
+        # Isolating the diagonal elements because we expect the positive
+        # elements to be in the diagonals
+        diag_elems = torch.diagonal(cross_similarity, 0)
+
+        row_sum_cross = cross_similarity.sum(0)  # Taking sum across row
+        row_sum_a = a_similarity.sum(0) 
+        row_sum_b = b_similarity.sum(0) 
+
+        loss = - torch.log(diag_elems / (row_sum_cross + row_sum_a  + row_sum_b + 1e-8)).sum()
+        if not self.name:
+            ret_dict = {'contrastive_loss': loss} 
+        else:
+            ret_dict = {f'{self.name}_contrastive_loss': loss} 
+        return ret_dict 
