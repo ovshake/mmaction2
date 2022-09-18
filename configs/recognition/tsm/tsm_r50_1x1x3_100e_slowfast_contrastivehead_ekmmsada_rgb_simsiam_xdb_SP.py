@@ -3,45 +3,43 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
-
 # fp16 training
 fp16 = dict()
 
 # model settings
-clip_len = 16
-
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
+fast_clip_len = 16
+slow_clip_len = 8
 model = dict(
-            type='ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D',
+            type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=clip_len,
+            cls_head=dict(num_segments=fast_clip_len,
                         num_classes=8,
                         spatial_type=None,
                         in_channels=2048),
-            vanilla_contrastive_head=dict(type='ContrastiveHead',
-                                num_segments=clip_len,
-                                feature_size=2048),
-            color_contrastive_head=dict(type='ContrastiveHead',
-                                num_segments=clip_len,
+            contrastive_head=dict(type='ContrastiveHead',
+                                num_segments=fast_clip_len,
                                 feature_size=2048),
             contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color'))
+                                name='color',
+                                use_positives_in_denominator=True,
+                                use_row_sum_b=True))
 
 # dataset settings
 train_dataset = 'D1'
 val_dataset = 'D2'
 test_dataset = None
 dataset_type = 'RawframeDataset'
-train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA'
+train_dataset_type = 'EpicKitchensSlowFastMMSADA'
 val_dataset_type = 'EpicKitchensMMSADA'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
-pathway_A_pipeline = [
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1),
+slow_train_pipeline = [
+    dict(type='SampleFrames', clip_len=fast_clip_len, frame_interval=2, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
@@ -51,12 +49,11 @@ pathway_A_pipeline = [
     dict(type='ToTensor', keys=['imgs', 'label'])
 ]
 
-pathway_B_pipeline = [
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1),
+fast_train_pipeline = [
+    dict(type='SampleFrames', clip_len=fast_clip_len, frame_interval=1, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter'),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -65,7 +62,7 @@ pathway_B_pipeline = [
 val_pipeline = [
     dict(
         type='SampleFrames',
-        clip_len=clip_len,
+        clip_len=fast_clip_len,
         frame_interval=1,
         num_clips=5,
         test_mode=True),
@@ -78,15 +75,14 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=6,
+    videos_per_gpu=10,
     workers_per_gpu=2,
-    test_dataloader=dict(videos_per_gpu=1),
+    test_dataloader=dict(videos_per_gpu=10),
     train=dict(
         type=train_dataset_type,
         domain=train_dataset,
-        pathway_A=pathway_A_pipeline,
-        pathway_B=pathway_B_pipeline,
-        clip_len=clip_len),
+        slow_pipeline=fast_train_pipeline,
+        fast_pipeline=slow_train_pipeline),
     val=dict(
         type=val_dataset_type,
         domain=val_dataset,
@@ -101,16 +97,21 @@ evaluation = dict(
     interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy', 'ece_score'])
 
 # optimizer
+num_gpus = 4
 optimizer = dict(
-    lr=0.0075 * (4 / 8) * (6 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (10 / 8) * (num_gpus / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=5)
-if test_dataset:
-    work_dir = f'./work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/colorspatialselfsupervised/train_{train_dataset}_test_{test_dataset}/'
-else:
-    work_dir = f'./work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/colorspatialselfsupervised/train_{train_dataset}_test_{val_dataset}/'
+work_dir = f'./work_dirs/test'
 total_epochs = 100
+
+log_config = dict(  # Config to register logger hook
+    interval=5,  # Interval to print the log
+    hooks=[  # Hooks to be implemented during training
+        dict(type='TextLoggerHook'),  # The logger used to record the training process
+        dict(type='TensorboardLoggerHook'),  # The Tensorboard logger is also supported
+    ])

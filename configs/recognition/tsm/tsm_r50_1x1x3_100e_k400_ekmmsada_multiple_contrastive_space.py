@@ -4,24 +4,26 @@ _base_ = [
 ]
 
 workflow = [('train', 1)]
-# fp16 training 
+# fp16 training
 fp16 = dict()
 
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
-            type='MultipleContrastiveRecognizer2D',
+            type='MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=8, 
-                        num_classes=8, 
-                        spatial_type=None, 
-                        in_channels=2048), 
-            num_contrastive_heads=3, 
-            self_supervised_loss=dict(type='MultipleContrastiveSingleInstanceLoss'), 
+            cls_head=dict(num_segments=8,
+                        num_classes=8,
+                        spatial_type=None,
+                        in_channels=2048),
+            num_heads=4,
+            contrastive_loss=dict(type='MultiplePathwayBaselineContrastiveLoss',
+                                    use_row_sum_b=True,
+                                    use_positives_in_denominator=True),
             contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=8,
                                 feature_size=2048))
@@ -109,7 +111,7 @@ data = dict(
     val=dict(
         type=val_dataset_type,
         domain='D1',
-        pipeline=val_pipeline), 
+        pipeline=val_pipeline),
     test=dict(
         type=val_dataset_type,
         domain='D1',
@@ -128,6 +130,6 @@ optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
-checkpoint_config = dict(interval=10)
-work_dir = './work_dirs/tsm_r50_1x1x3_100e_k400_ucf_hmdb_rgb/slow-fast-contrastive-head/train_D1_test_D2/'
+checkpoint_config = dict(interval=5)
+work_dir = './work_dirs/test'
 total_epochs = 100

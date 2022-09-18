@@ -12,7 +12,7 @@ clip_len = 16
 
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
-            type='ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D',
+            type='ColorSpatialSelfSupervised1SimSiamCosSimRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
@@ -22,14 +22,11 @@ model = dict(
                         num_classes=8,
                         spatial_type=None,
                         in_channels=2048),
-            vanilla_contrastive_head=dict(type='ContrastiveHead',
+            contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=clip_len,
                                 feature_size=2048),
-            color_contrastive_head=dict(type='ContrastiveHead',
-                                num_segments=clip_len,
-                                feature_size=2048),
-            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color'))
+            loss=dict(type='SimSiamCosineSimLoss',
+                     loss_weight=10., name='color_simsiam'))
 
 # dataset settings
 train_dataset = 'D1'
@@ -109,8 +106,13 @@ lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=5)
-if test_dataset:
-    work_dir = f'./work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/colorspatialselfsupervised/train_{train_dataset}_test_{test_dataset}/'
-else:
-    work_dir = f'./work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/colorspatialselfsupervised/train_{train_dataset}_test_{val_dataset}/'
+work_dir = f'./work_dirs/test'
 total_epochs = 100
+
+
+log_config = dict(  # Config to register logger hook
+    interval=5,  # Interval to print the log
+    hooks=[  # Hooks to be implemented during training
+        dict(type='TextLoggerHook'),  # The logger used to record the training process
+        dict(type='TensorboardLoggerHook'),  # The Tensorboard logger is also supported
+    ])

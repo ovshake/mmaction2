@@ -6,6 +6,10 @@ _base_ = [
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 
+
+# fp16 training
+fp16 = dict()
+
 vcops_num_clips = 3
 model = dict(
             type='VCOPSRecognizer2D',
@@ -14,9 +18,9 @@ model = dict(
                 norm_eval=False,
                 shift_div=8),
             num_clips=vcops_num_clips,
-            cls_head=dict(num_segments=16, num_classes=8), 
+            cls_head=dict(num_segments=16, num_classes=8),
             vcop_head=dict(type='VCOPHead',
-                           num_clips=vcops_num_clips, 
+                           num_clips=vcops_num_clips,
                            feature_size=2048 * 7 * 7))
 
 # dataset settings
@@ -50,7 +54,7 @@ val_pipeline = [
 ]
 data = dict(
     videos_per_gpu=5,
-    workers_per_gpu=10,
+    workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
@@ -60,7 +64,7 @@ data = dict(
     val=dict(
         type=dataset_type,
         domain='D1',
-        pipeline=val_pipeline), 
+        pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
         domain='D2',
@@ -72,7 +76,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (3 / 8) * (16 / 5),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (5 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

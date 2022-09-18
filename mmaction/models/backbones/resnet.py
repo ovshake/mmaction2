@@ -46,7 +46,7 @@ class BasicBlock(nn.Module):
                  with_cp=False):
         super().__init__()
         assert style in ['pytorch', 'caffe']
-        
+
         self.conv1 = ConvModule(
             inplanes,
             planes,
@@ -351,14 +351,14 @@ class ResNet(nn.Module):
                  partial_bn=False,
                  with_cp=False):
         super().__init__()
-        
+
         if dist.is_initialized():
             norm_cfg['type'] = 'SyncBN'
         else:
             norm_cfg['type'] = 'BN2d'
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for resnet')
-        
+
         self.depth = depth
         self.in_channels = in_channels
         self.pretrained = pretrained
