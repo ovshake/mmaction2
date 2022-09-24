@@ -6,7 +6,7 @@ _base_ = [
 workflow = [('train', 1)]
 # fp16 training
 fp16 = dict()
-
+find_unused_parameters = True
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 model = dict(
@@ -14,6 +14,7 @@ model = dict(
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                frozen_stages=4,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
             cls_head=dict(num_segments=8,
@@ -27,7 +28,8 @@ model = dict(
             contrastive_head=dict(type='ContrastiveHead',
                                 num_segments=8,
                                 feature_size=2048),
-                            detach_pathway_num=-1)
+            detach_pathway_num=None,
+            freeze_cls_head=True)
 
 # dataset settings
 dataset_type = 'RawframeDataset'
@@ -124,9 +126,15 @@ evaluation = dict(
     interval=5, metrics=['top_k_accuracy', 'mean_class_accuracy', 'ece_score'])
 
 # optimizer
+
 optimizer = dict(
+    type='SGD',
+    constructor='TSMOptimizerConstructor',
+    paramwise_cfg=dict(fc_lr5=False),
     lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
-)
+    momentum=0.9,
+    weight_decay=0.0001)
+
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
