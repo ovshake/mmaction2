@@ -112,6 +112,11 @@ class TSMHead(BaseHead):
         # [N, num_classes]
         return cls_score.squeeze(1)
 
+    # def eval(self):
+    #     super().eval()
+    #     for m in self.parameters():
+    #         m.requires_grad = False
+
 
 
 @HEADS.register_module()
@@ -219,7 +224,7 @@ class SelfSupervisedTSMHead(BaseHead):
             losses.update(loss_cls)
         else:
             losses['loss_cls'] = loss_cls
-        
+
         if isinstance(loss_self_supervised, dict):
             losses.update(loss_cls)
         else:

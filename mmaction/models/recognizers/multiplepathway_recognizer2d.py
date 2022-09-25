@@ -22,6 +22,8 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
                  train_cfg=None,
                  test_cfg=None,
                  num_heads=None,
+                 detach_pathway_num=None,
+                 freeze_cls_head=False,
                  device='cuda'):
 
         super().__init__(backbone=backbone,
@@ -72,6 +74,7 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
         self.cls_head = builder.build_head(cls_head) if cls_head else None
 
         self.num_heads = num_heads
+        self.detach_pathway_num = detach_pathway_num
         self.contrastive_heads = []
         for _ in range(num_heads):
             self.contrastive_heads.append(builder.build_head(contrastive_head).to(device))
@@ -107,6 +110,9 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
         self.init_weights()
 
         self.fp16_enabled = False
+        self.freeze_cls_head = freeze_cls_head
+        # if self.freeze_cls_head:
+        #     self.cls_head.eval()
 
     def forward(self, imgs, label=None, return_loss=True, **kwargs):
         """Define the computation performed at every call."""
@@ -133,6 +139,9 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
 
     def forward_train(self, imgs_pathways, labels, **kwargs):
         assert self.with_cls_head
+        if self.freeze_cls_head:
+            self.cls_head.eval()
+
         losses = dict()
 
         processed_pathways = []
@@ -140,10 +149,12 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
             x = self.process_pathways(imgs.float())
             processed_pathways.append(x)
 
-        cls_scores = self.cls_head(processed_pathways[-1].float(), -1)
         embedding_spaces = None
         labels = labels.squeeze()
+
+        cls_scores = self.cls_head(processed_pathways[-1].float(), -1)
         loss_cls = self.cls_head.loss(cls_scores, labels, **kwargs)
+        losses.update(loss_cls)
         for idx in range(len(self.contrastive_heads)):
             h_img = self.contrastive_heads[idx](processed_pathways[idx].float())
 
@@ -152,9 +163,10 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
             else:
                 embedding_spaces = torch.vstack((embedding_spaces, h_img.unsqueeze(0)))
 
-        embedding_spaces[-1] = embedding_spaces[-1].detach() # detaching features of q
+        if self.detach_pathway_num is not None:
+            embedding_spaces[self.detach_pathway_num] = embedding_spaces[self.detach_pathway_num].detach() # detaching features of q
         loss_contrastive = self.contrastive_loss(embedding_spaces)
-        losses.update(loss_cls)
+
         losses.update(loss_contrastive)
         return losses
 

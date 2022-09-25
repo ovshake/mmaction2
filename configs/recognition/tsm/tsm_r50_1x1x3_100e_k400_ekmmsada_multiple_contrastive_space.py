@@ -125,8 +125,13 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
+    type='SGD',
+    constructor='TSMFreezeFCLayerOptimizerConstructor',
+    paramwise_cfg=dict(fc_lr5=False),
     lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
-)
+    momentum=0.9,
+    weight_decay=0.0001)
+
 optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 

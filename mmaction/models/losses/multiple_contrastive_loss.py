@@ -325,7 +325,7 @@ class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
 			b_similarity = b_similarity.exp()
 			row_sum_a = a_similarity.sum(0)
 			row_sum_b = b_similarity.sum(0)
-			negatives_from_other_subspace = None
+			negatives_from_other_subspace = 1e-8
 			denominator = 1e-8
 			if self.use_row_sum_a:
 				denominator += row_sum_a
@@ -339,10 +339,7 @@ class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
 					negative_similarity_matrix = self._calculate_cosine_similarity(k_0_feat, features[idx_negative])
 					negative_similarity_matrix = negative_similarity_matrix / self.temperature
 					negative_similarity_matrix = negative_similarity_matrix.exp()
-					if not negatives_from_other_subspace:
-						negatives_from_other_subspace = torch.diagonal(negative_similarity_matrix, 0)
-					else:
-						negatives_from_other_subspace += torch.diagonal(negative_similarity_matrix, 0)
+					negatives_from_other_subspace += torch.diagonal(negative_similarity_matrix, 0)
 
 			loss += - (
 				torch.log(diag_elems / (denominator + negatives_from_other_subspace)).mean()
