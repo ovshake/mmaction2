@@ -24,9 +24,11 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
                  neck=None,
                  train_cfg=None,
                  test_cfg=None,
-                 domain=None,):
+                 domain=None,
+                 emb_stage='proj_head'):
         super().__init__(backbone=backbone, cls_head=cls_head, train_cfg=train_cfg, test_cfg=test_cfg)
 
+        self.emb_stage = emb_stage
         if speed_network:
             self.speed_network = builder.build_model(speed_network).eval()
         else:
@@ -152,10 +154,10 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         t_embs = []
         with torch.no_grad():
             if self.speed_network:
-                t_speed_emb = self.speed_network.forward_teacher(imgs).detach()
+                t_speed_emb = self.speed_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
                 t_embs.append(t_speed_emb)
             if self.color_network:
-                t_color_emb = self.color_network.forward_teacher(imgs).detach()
+                t_color_emb = self.color_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
                 t_embs.append(t_color_emb)
 
         batches = imgs.shape[0]

@@ -8,8 +8,19 @@ from .. import builder
 from einops import rearrange
 from .recognizer2d import Recognizer2D
 from torch.nn.functional import normalize
+import torch.distributed as dist
 
-
+def concat_all_gather(tensor, dim=0):
+	"""
+	Performs all_gather operation on the provided tensors.
+	*** Warning ***: torch.distributed.all_gather has no gradient.
+	"""
+	tensors_gather = [torch.ones_like(tensor)
+		for _ in range(torch.distributed.get_world_size())]
+	torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
+	tensors_gather[dist.get_rank()] = tensor
+	output = torch.cat(tensors_gather, dim=dim)
+	return output
 
 
 @RECOGNIZERS.register_module()
@@ -318,7 +329,8 @@ class ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D(Recognizer2D
 
         self.contrastive_head = builder.build_head(contrastive_head)
 
-        self.color_contrastive_loss = builder.build_loss(contrastive_loss)
+        if contrastive_loss:
+            self.color_contrastive_loss = builder.build_loss(contrastive_loss)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
@@ -348,7 +360,7 @@ class ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D(Recognizer2D
 
         self.init_weights()
 
-        self.fp16_enabled = False
+        self.fp16_enabled = True
         self.color_to_vanilla_projection_layer = nn.Linear(self.contrastive_head.img_dim,
                                                 self.contrastive_head.img_dim, bias=True)
 
@@ -401,6 +413,22 @@ class ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D(Recognizer2D
         losses.update(loss_cls)
         losses.update(loss_self_supervised)
         return losses
+
+    def forward_teacher(self, imgs, emb_stage):
+        batches = imgs.shape[0]
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        x = self.extract_feat(imgs)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze()
+        if emb_stage == 'backbone':
+            return x
+        elif emb_stage == 'proj_layer':
+            print('returning proj features')
+            contrastive_features = self.contrastive_head(x.float())
+            proj_features = self.color_to_vanilla_projection_layer(contrastive_features)
+            return proj_features
+        else:
+            return self.contrastive_head(x.float())
 
 
     def train_step(self, data_batch, optimizer, **kwargs):
