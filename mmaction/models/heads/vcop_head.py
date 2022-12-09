@@ -50,7 +50,9 @@ class VCOPHead(nn.Module):
         h = torch.cat(pf, dim=1)
         h = self.dropout(h)
         h = self.fc8(h)  # logits
+        # print("h = self.fc8(h) ", h.shape)
         h = F.softmax(h, dim=1)
+        # print("h = F.softmax(h, dim=1)", h.shape)
         if return_loss:
             vcop_loss = self.vcop_loss(h, torch.tensor(order_index).repeat(h.size()[0]).to(h.device)) 
             return {"vcop_loss": vcop_loss}

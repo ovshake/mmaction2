@@ -230,7 +230,7 @@ class MultipleContrastiveSingleInstanceLoss(BaseWeightedLoss):
 
 @LOSSES.register_module()
 class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
-	def __init__(self, loss_weight=1.0, temperature=0.5,
+	def __init__(self, loss_weight=1.0, temperature=0.7, #moco-v2 temperature=0.07 moco-v3 temperature=1.0
 		use_row_sum_a=False,
 		use_row_sum_b=False,
 		use_positives_in_denominator=False):
@@ -294,7 +294,7 @@ class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
 
 		loss = - torch.log(diag_elems / denominator).mean()
 		ret_dict = {'Z0_contrastive_loss': loss}
-		return ret_dict
+		return ret_dict, loss
 
 
 	def _calculate_one_invariant_info_nce_loss(self, features):
@@ -341,8 +341,149 @@ class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
 					negative_similarity_matrix = negative_similarity_matrix.exp()
 					negatives_from_other_subspace += torch.diagonal(negative_similarity_matrix, 0)
 
+			loss += (
+				- torch.log(diag_elems / (denominator + negatives_from_other_subspace)).mean()
+			)
+		ret_dict = {"Zk_contrastive_loss": loss}
+		return ret_dict, loss
+
+
+	def _forward(self, features):
+		loss_dict = {}
+		z0_loss, loss_z0 = self._calculate_all_invariant_info_nce_loss(features[0], features[-1])
+		zk_loss, loss_z1_2 = self._calculate_one_invariant_info_nce_loss(features)
+		# all_loss = - (1/3)*(loss_z0 + loss_z1_2)
+		# loss = {"Multi_contrastive_loss":all_loss }
+		# loss_dict.update(loss)
+		loss_dict.update(z0_loss)
+		loss_dict.update(zk_loss)
+		return loss_dict
+
+#------------------------------------
+
+@LOSSES.register_module()
+class MultiplePathwayBaselineContrastiveLoss_div(BaseWeightedLoss):
+	def __init__(self, loss_weight=1.0, temperature=0.7, #moco-v2 temperature=0.07 moco-v3 temperature=1.0
+		use_row_sum_a=False,
+		use_row_sum_b=False,
+		use_positives_in_denominator=False):
+		super().__init__()
+		self.loss_weight = loss_weight
+		self.temperature = temperature
+		self.use_row_sum_a = use_row_sum_a
+		self.use_row_sum_b = use_row_sum_b
+		self.use_positives_in_denominator = use_positives_in_denominator
+
+	def _calculate_cosine_similarity(self, a, b, eps=1e-8):
+		"""
+		added eps for numerical stability
+		"""
+		a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
+		a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
+		b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
+		sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
+		return sim_mt
+
+	def _calculate_all_invariant_info_nce_loss(self, features_a, features_b):
+		if dist.is_initialized():
+			features_a = concat_all_gather(features_a)
+			features_b = concat_all_gather(features_b)
+		batch_size = features_a.shape[0]
+		mask = torch.eye(batch_size, dtype=torch.bool)
+		cross_similarity = self._calculate_cosine_similarity(features_a, features_b)
+		diagonal_similarity = self._calculate_cosine_similarity(features_a, features_b)
+		# Isolating the diagonal elements because we expect the positive
+		# elements to be in the diagonals
+		diag_elems = torch.diagonal(diagonal_similarity, 0)
+		cross_similarity[mask] = 0.
+		a_similarity = self._calculate_cosine_similarity(features_a, features_a)
+		a_similarity[mask] = 0.
+		b_similarity = self._calculate_cosine_similarity(features_b, features_b)
+		b_similarity[mask] = 0.
+
+		cross_similarity = cross_similarity / self.temperature
+		cross_similarity = cross_similarity.exp()
+
+
+		a_similarity = a_similarity / self.temperature
+		a_similarity = a_similarity.exp()
+
+		b_similarity = b_similarity / self.temperature
+		b_similarity = b_similarity.exp()
+
+		row_sum_cross = cross_similarity.sum(0)  # Taking sum across row
+		row_sum_a = a_similarity.sum(0)
+		row_sum_b = b_similarity.sum(0)
+
+		# We are taking
+		denominator = row_sum_cross
+		if self.use_row_sum_a:
+			denominator += row_sum_a
+		if self.use_row_sum_b:
+			denominator += row_sum_b
+		if self.use_positives_in_denominator:
+			denominator += diag_elems
+
+		denominator += 1e-8
+
+		loss = - (torch.log(diag_elems / denominator).mean())/3
+		ret_dict = {'Z0_contrastive_loss': loss}
+		return ret_dict
+
+
+	def _calculate_one_invariant_info_nce_loss(self, features):
+		if dist.is_initialized():
+			features = concat_all_gather(features, dim=1)
+	
+		batch_size = features[0].shape[0]
+		mask = torch.eye(batch_size, dtype=torch.bool)
+		q_feat = features[0]
+		k_0_feat = features[1]
+		num_embedding_space = len(features)
+		loss = 0.
+		for idx in range(2, num_embedding_space):# similarity_matrix ==  cross_similarity_matrix
+			similarity_matrix = self._calculate_cosine_similarity(q_feat, features[idx])
+			cross_similarity_matrix = self._calculate_cosine_similarity(q_feat, features[idx])
+			diag_elems = torch.diagonal(similarity_matrix, 0)
+			#similarity_matrix[mask] = 0.
+
+			a_similarity = self._calculate_cosine_similarity(q_feat, q_feat)
+			a_similarity[mask] = 0.
+			b_similarity = self._calculate_cosine_similarity(features[idx], features[idx])
+			b_similarity[mask] = 0.
+
+			cross_similarity_matrix = cross_similarity_matrix / self.temperature
+			cross_similarity_matrix = cross_similarity_matrix.exp()
+			a_similarity = a_similarity / self.temperature
+			a_similarity = a_similarity.exp()
+
+			b_similarity = b_similarity / self.temperature
+			b_similarity = b_similarity.exp()
+			row_sum_cross = cross_similarity_matrix.sum(0)  # Taking sum across row
+
+			row_sum_a = a_similarity.sum(0)
+			row_sum_b = b_similarity.sum(0)
+			negatives_from_other_subspace = 1e-8
+			denominator = row_sum_cross
+			if self.use_row_sum_a:
+				denominator += row_sum_a
+			if self.use_row_sum_b:
+				denominator += row_sum_b
+			if self.use_positives_in_denominator:
+				denominator += diag_elems
+
+			denominator += 1e-8
+
+			for idx_negative in range(2, num_embedding_space ):
+				if idx != idx_negative:
+					negative_similarity_matrix = self._calculate_cosine_similarity(k_0_feat, features[idx_negative])
+					negative_similarity_matrix = negative_similarity_matrix / self.temperature
+					negative_similarity_matrix = negative_similarity_matrix.exp()
+					negatives_from_other_subspace += torch.diagonal(negative_similarity_matrix, 0)
+
 			loss += - (
-				torch.log(diag_elems / (denominator + negatives_from_other_subspace)).mean()
+				 (torch.log(diag_elems / (denominator + negatives_from_other_subspace)).mean())/3
+				 #(torch.log(diag_elems / denominator).mean())/3
 			)
 		ret_dict = {"Zk_contrastive_loss": loss}
 		return ret_dict
@@ -350,13 +491,102 @@ class MultiplePathwayBaselineContrastiveLoss(BaseWeightedLoss):
 
 	def _forward(self, features):
 		loss_dict = {}
-		z0_loss = self._calculate_all_invariant_info_nce_loss(features[0], features[-1])
-		zk_loss = self._calculate_one_invariant_info_nce_loss(features)
+		z0_loss= self._calculate_all_invariant_info_nce_loss(features[0], features[1])
+		zk_loss= self._calculate_one_invariant_info_nce_loss(features)
+		# all_loss = - (1/3)*(loss_z0 + loss_z1_2)
+		# loss = {"Multi_contrastive_loss":all_loss }
+		# loss_dict.update(loss)
 		loss_dict.update(z0_loss)
 		loss_dict.update(zk_loss)
 		return loss_dict
 
 
+#------------------------------------
+@LOSSES.register_module()
+class Multi_Contrastive_Loss_each_space(BaseWeightedLoss):
+	def __init__(self, loss_weight=1.0, temperature=0.7, #moco-v2 temperature=0.07 moco-v3 temperature=1.0
+		use_row_sum_a=False,
+		use_row_sum_b=False,
+		use_positives_in_denominator=False):
+		super().__init__()
+		self.loss_weight = loss_weight
+		self.temperature = temperature
+		self.use_row_sum_a = use_row_sum_a
+		self.use_row_sum_b = use_row_sum_b
+		self.use_positives_in_denominator = use_positives_in_denominator
 
+	def _calculate_cosine_similarity(self, a, b, eps=1e-8):
+		"""
+		added eps for numerical stability
+		"""
+		a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
+		a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
+		b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
+		sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
+		return sim_mt
 
+	def _calculate_one_invariant_info_nce_loss(self, features):
+		if dist.is_initialized():
+			features = concat_all_gather(features, dim=1)
+	
+		batch_size = features[0].shape[0]
+		mask = torch.eye(batch_size, dtype=torch.bool)
+		q_feat = features[0]
+		k_0_feat = features[1]
+		num_embedding_space = len(features)
+		loss = 0.
+		for idx in range(1, num_embedding_space):# similarity_matrix ==  cross_similarity_matrix
+			similarity_matrix = self._calculate_cosine_similarity(q_feat, features[idx])
+			cross_similarity_matrix = self._calculate_cosine_similarity(q_feat, features[idx])
+			diag_elems = torch.diagonal(similarity_matrix, 0)
+			#similarity_matrix[mask] = 0.
 
+			a_similarity = self._calculate_cosine_similarity(q_feat, q_feat)
+			a_similarity[mask] = 0.
+			b_similarity = self._calculate_cosine_similarity(features[idx], features[idx])
+			b_similarity[mask] = 0.
+
+			cross_similarity_matrix = cross_similarity_matrix / self.temperature
+			cross_similarity_matrix = cross_similarity_matrix.exp()
+			a_similarity = a_similarity / self.temperature
+			a_similarity = a_similarity.exp()
+
+			b_similarity = b_similarity / self.temperature
+			b_similarity = b_similarity.exp()
+			row_sum_cross = cross_similarity_matrix.sum(0)  # Taking sum across row
+
+			row_sum_a = a_similarity.sum(0)
+			row_sum_b = b_similarity.sum(0)
+			negatives_from_other_subspace = 1e-8
+			denominator = row_sum_cross
+			if self.use_row_sum_a:
+				denominator += row_sum_a
+			if self.use_row_sum_b:
+				denominator += row_sum_b
+			if self.use_positives_in_denominator:
+				denominator += diag_elems
+
+			denominator += 1e-8
+
+			for idx_negative in range(2, num_embedding_space ):
+				if idx != idx_negative:
+					negative_similarity_matrix = self._calculate_cosine_similarity(k_0_feat, features[idx_negative])
+					negative_similarity_matrix = negative_similarity_matrix / self.temperature
+					negative_similarity_matrix = negative_similarity_matrix.exp()
+					negatives_from_other_subspace += torch.diagonal(negative_similarity_matrix, 0)
+
+			loss += - (
+				 (torch.log(diag_elems / (denominator + negatives_from_other_subspace)).mean())/3
+				 #(torch.log(diag_elems / denominator).mean())/3
+			)
+		ret_dict = {"Zk_contrastive_loss": loss}
+		return ret_dict
+
+	def _forward(self, features):
+		loss_dict = {}
+
+		zk_loss = self._calculate_one_invariant_info_nce_loss(features)
+
+	
+		loss_dict.update(zk_loss)
+		return loss_dict

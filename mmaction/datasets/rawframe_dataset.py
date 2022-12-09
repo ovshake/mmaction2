@@ -149,8 +149,9 @@ class RawframeDataset(BaseDataset):
                 else:
                     assert len(label) == 1
                     video_info['label'] = label[0]
+                print(  "video_info['offset']",video_info['offset'] )
                 video_infos.append(video_info)
-
+      
         return video_infos
 
     def prepare_train_frames(self, idx):

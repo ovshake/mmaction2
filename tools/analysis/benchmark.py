@@ -34,6 +34,7 @@ def main():
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False # for making same results on different GPUs
     cfg.model.backbone.pretrained = None
     cfg.data.test.test_mode = True
 

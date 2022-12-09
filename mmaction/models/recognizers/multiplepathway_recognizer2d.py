@@ -18,7 +18,7 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
                  cls_head=None,
                  contrastive_head=None,
                  contrastive_loss=None,
-                 neck=None,
+                   neck=None,
                  train_cfg=None,
                  test_cfg=None,
                  num_heads=None,
@@ -32,7 +32,6 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
                         test_cfg=test_cfg)
 
         self.backbone_from = 'mmaction2'
-        torch.autograd.set_detect_anomaly(True)
         if backbone['type'].startswith('mmcls.'):
             try:
                 import mmcls.models.builder as mmcls_builder
@@ -111,8 +110,8 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
 
         self.fp16_enabled = False
         self.freeze_cls_head = freeze_cls_head
-        # if self.freeze_cls_head:
-        #     self.cls_head.eval()
+        if self.freeze_cls_head:
+            self.cls_head.eval()
 
     def forward(self, imgs, label=None, return_loss=True, **kwargs):
         """Define the computation performed at every call."""
@@ -145,7 +144,7 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
         losses = dict()
 
         processed_pathways = []
-        for imgs in imgs_pathways:
+        for imgs in imgs_pathways: # imgs_pathways has all the pathways 
             x = self.process_pathways(imgs.float())
             processed_pathways.append(x)
 
@@ -160,11 +159,14 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
 
             if embedding_spaces is None:
                 embedding_spaces = h_img.unsqueeze(0)
+                
             else:
                 embedding_spaces = torch.vstack((embedding_spaces, h_img.unsqueeze(0)))
+                
 
         if self.detach_pathway_num is not None:
-            embedding_spaces[self.detach_pathway_num] = embedding_spaces[self.detach_pathway_num].detach() # detaching features of q
+            for number in self.detach_pathway_num:
+                embedding_spaces[number] = embedding_spaces[number].detach() # detaching features of q
         loss_contrastive = self.contrastive_loss(embedding_spaces)
 
         losses.update(loss_contrastive)

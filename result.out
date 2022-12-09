@@ -750,7 +750,7 @@ Use load_from_local loader
 [>>>>>>>>>>>>>>>>>>>>>>>>>>>> ] 748/750, 1.6 task/s, elapsed: 457s, ETA:     1s
 [>>>>>>>>>>>>>>>>>>>>>>>>>>>> ] 749/750, 1.6 task/s, elapsed: 458s, ETA:     1s
 [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>] 750/750, 1.6 task/s, elapsed: 458s, ETA:     0s
-writing results to /data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_v2/speed-contrastive-head-all-gather/train_D1_test_D2/output.pkl
+writing results to /data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_v2/speed-contrastive-head-all-gather/train_D1_test_D2/output.pkl
 
 Evaluating top_k_accuracy ...
 

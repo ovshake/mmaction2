@@ -21,6 +21,7 @@ def process_checkpoint(in_file, out_file):
         del checkpoint['optimizer']
     # if it is necessary to remove some sensitive data in checkpoint['meta'],
     # add the code here.
+    print('this is used ')
     torch.save(checkpoint, out_file)
     sha = subprocess.check_output(['sha256sum', out_file]).decode()
     if out_file.endswith('.pth'):

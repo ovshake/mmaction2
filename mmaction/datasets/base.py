@@ -122,6 +122,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
             else:
                 assert len(video_infos[i]['label']) == 1
                 video_infos[i]['label'] = video_infos[i]['label'][0]
+        print(video_infos.keys())
         return video_infos
 
     def parse_by_class(self):

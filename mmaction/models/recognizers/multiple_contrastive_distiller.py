@@ -10,6 +10,9 @@ from .recognizer2d import Recognizer2D
 from torch.nn.functional import normalize
 import torch.distributed as dist
 from .color_contrastive_recognizer2d import ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D
+from mmcv.runner import (DistSamplerSeedHook, EpochBasedRunner, OptimizerHook,
+                         build_optimizer, get_dist_info)
+import numpy as np
 
 
 @RECOGNIZERS.register_module()
@@ -19,6 +22,8 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
                  cls_head=None,
                  speed_network=None,
                  color_network=None,
+                 vcop_network=None,
+                 vcop_head=None,
                  contrastive_head=None,
                  emb_loss=None,
                  neck=None,
@@ -39,25 +44,40 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         else:
             self.color_network = None
 
+        if vcop_network:
+            self.vcop_network = builder.build_model(vcop_network).eval()
+        else:
+            self.vcop_network = None
+
+        self.device = torch.device('cuda')
         speed_network_ckpt_dict = {
-            "D1": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_v1/speed-contrastive-simsiam-xdb/train_D1_test_D1/best_top1_acc_epoch_45.pth",
-            "D2": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_v1/speed-contrastive-simsiam-xdb/train_D2_test_D2/best_top1_acc_epoch_30.pth",
-            "D3": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_v1/speed-contrastive-simsiam-xdb/train_D3_test_D3/best_top1_acc_epoch_65.pth"
+            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D1_test_D1/best_top1_acc_epoch_65.pth",
+            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D2_test_D2/best_top1_acc_epoch_30.pth",
+            "D3": "//data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D3_test_D3/best_top1_acc_epoch_65.pth"
         }
 
         color_network_ckpt_dict = {
-            "D1": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_cont_ablation/color-contrastive-single-instance-X-b-d-mean-simsiam-proj-layer/train_D1_test_D1/best_top1_acc_epoch_45.pth",
-            "D2": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_cont_ablation/color-contrastive-single-instance-X-b-d-mean-simsiam-proj-layer/train_D2_test_D2/best_top1_acc_epoch_45.pth",
-            "D3": "/data/abhishek/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_cont_ablation/color-contrastive-single-instance-X-b-d-mean-simsiam-proj-layer/train_D3_test_D3/best_top1_acc_epoch_50.pth",
+            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D1_test_D1/best_top1_acc_epoch_100.pth",
+            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D2_test_D2/best_top1_acc_epoch_85.pth",
+            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D3_test_D3/best_top1_acc_epoch_55.pth",
+        }
+        vcop_network_ckpt_dict = {
+            "D1": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D1_test_D1/best_top1_acc_epoch_95.pth",
+            "D2": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D2_test_D2/best_top1_acc_epoch_65.pth",
+            "D3": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D3_test_D3/best_top1_acc_epoch_80.pth"
         }
 
-
+        # print(self.vcop_network)
         if self.speed_network:
             self.speed_network.load_state_dict(torch.load(speed_network_ckpt_dict[domain]), strict=False)
             self.speed_contrastive_emb_head = builder.build_head(contrastive_head)
         if self.color_network:
             self.color_network.load_state_dict(torch.load(color_network_ckpt_dict[domain]), strict=False)
             self.color_contrastive_emb_head = builder.build_head(contrastive_head)
+        if self.vcop_network:
+            self.vcop_network.load_state_dict(torch.load((vcop_network_ckpt_dict[domain])), strict=False)
+            vcop_head = dict(type='VCOPHead',num_clips=3, feature_size=2048*7*7 )
+            self.vcop_emb_head = builder.build_head(vcop_head)
 
         self.emb_loss = builder.build_loss(emb_loss)
 
@@ -144,7 +164,7 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
                 imgs, label = self.blending(imgs, label)
 
             return self.forward_train(imgs, label, **kwargs)
-
+        #print('imgs',imgs.shape)
         return self.forward_test(imgs, **kwargs)
 
 
@@ -152,6 +172,7 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         """Defines the computation performed at every call when training."""
         assert self.with_cls_head
         t_embs = []
+        # print('imgs that goes in to teacher', imgs.shape)
         with torch.no_grad():
             if self.speed_network:
                 t_speed_emb = self.speed_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
@@ -159,14 +180,20 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
             if self.color_network:
                 t_color_emb = self.color_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
                 t_embs.append(t_color_emb)
+            if self.vcop_network:
+                t_vcop_emb = self.vcop_network.forward_teacher(imgs, emb_stage='backbone').detach()
+                t_embs.append(t_vcop_emb) # the output feature from the vcop trained tsm not head .... 
+        
+        # print("t_embs[0] --- teacher embedding size", t_embs[0].shape)
 
         batches = imgs.shape[0]
-        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:]) # imgs reshape to (batches*frames, c, h, w)???
         num_segs = imgs.shape[0] // batches
 
         losses = dict()
 
-        x = self.extract_feat(imgs)
+        x = self.extract_feat(imgs) # is this tsm backbone that aare are extracting the features from ???
+        #print('x = self.extract_feat(imgs) ---- this goes into the student ', type(x))
 
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
@@ -176,6 +203,8 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
             x = x.reshape(x.shape + (1, 1))
         x = nn.AdaptiveAvgPool2d(1)(x)
         x = x.squeeze()
+        # print('student  is above with nn.AdaptiveAvgPool2d(1)(x), x.squeeze()')
+        # print('x = x.squeeze() -  this goes in to the contrastive head',x.shape)
         s_embs = []
         if self.speed_network:
             s_speed_emb = self.speed_contrastive_emb_head(x.float())
@@ -183,16 +212,34 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         if self.color_network:
             s_color_emb = self.color_contrastive_emb_head(x.float())
             s_embs.append(s_color_emb)
+        if self.vcop_network:
+            s_vcop_emb =x
+            s_embs.append(s_vcop_emb)
 
+        # print('s_embs[0] ---  student embedding shape ', s_embs[0].shape)
+
+        c1 = s_embs[0].detach().cpu().numpy()
+        c2 = t_embs[0].detach().cpu().numpy()
+        if np.all(c1==c2):
+            print('student and teacher embeddings are same')
+        # if t_embs==s_embs:
+        #     print('same')
+        # print(torch.equal(t_embs, s_embs))
         t_embs = torch.vstack(t_embs)
         s_embs = torch.vstack(s_embs)
+        
+        # print('t_embs --- teacher embedding shape ', t_embs.shape)
+        # print('s_embs --- student embedding shape ', s_embs.shape)
 
         loss_emb = self.emb_loss(t_embs, s_embs)
         cls_score = self.cls_head(x.float(), num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
-        losses.update(loss_cls)
+
         losses.update(loss_emb)
+
+        losses.update(loss_cls)
+        
         return losses
 
 

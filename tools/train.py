@@ -86,6 +86,8 @@ def main():
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False # for making same results on different GPUs
+
 
     # work_dir is determined in this priority:
     # CLI > config file > default (base filename)
@@ -147,6 +149,7 @@ def main():
         logger.info(f'Set random seed to {args.seed}, '
                     f'deterministic: {args.deterministic}')
         set_random_seed(args.seed, deterministic=args.deterministic)
+    torch.backends.cudnn.deterministic = True # for making same results on different GPUs
     cfg.seed = args.seed
     meta['seed'] = args.seed
     meta['config_name'] = osp.basename(args.config)

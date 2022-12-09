@@ -4,11 +4,11 @@
 
 exp_name="order-contrastive"
 section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
-config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_order_contrastivehead_ekmmsada_rgb.py"
-work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
-d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/epoch_100.pth"
-d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/epoch_80.pth"
-d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/epoch_85.pth"
+config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_order_contrastivehead_ekmmsada_rgb.py"
+work_dir="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name"
+d1_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/epoch_100.pth"
+d2_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/epoch_80.pth"
+d3_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/epoch_85.pth"
 
 
 python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/ece_output.pkl" --eval ece_score  --cfg-options data.test.domain='D2' 
@@ -29,11 +29,11 @@ python tools/test.py $config $d3_ckpt --out "$work_dir/train_D3_test_D2/ece_outp
 
 # exp_name="tsm-baseline-mmsada"
 # section_name="tsm_r50_1x1x3_100e_ekmmsada_rgb_v2"
-# config="/data/abhishek/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
-# work_dir="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name"
-# d1_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/epoch_100.pth"
-# d2_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/epoch_85.pth"
-# d3_ckpt="/data/abhishek/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/epoch_95.pth"
+# config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
+# work_dir="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name"
+# d1_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D1_test_D1/epoch_100.pth"
+# d2_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D2_test_D2/epoch_85.pth"
+# d3_ckpt="/data/shinpaul14/projects/mmaction2/work_dirs/$section_name/$exp_name/train_D3_test_D3/epoch_95.pth"
 
 
 # python tools/test.py $config $d1_ckpt --out "$work_dir/train_D1_test_D2/ece_output.pkl" --eval ece_score  --cfg-options data.test.domain='D2' 

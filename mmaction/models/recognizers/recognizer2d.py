@@ -6,7 +6,8 @@ from ..builder import RECOGNIZERS
 from .base import BaseRecognizer
 from .. import builder
 from einops import rearrange
-
+import numpy
+import sys
 
 @RECOGNIZERS.register_module()
 class Recognizer2D(BaseRecognizer):
@@ -54,8 +55,14 @@ class Recognizer2D(BaseRecognizer):
         batches = imgs.shape[0]
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         num_segs = imgs.shape[0] // batches
-
+        
         x = self.extract_feat(imgs)
+        q = 1
+        if q==1:
+            ss = x[0][0].detach().cpu().numpy()
+            numpy.savetxt( '/data/shinpaul14/projects/mmaction2/speed.txt', ss)
+            q+=1
+   
         x = nn.AdaptiveAvgPool2d(1)(x)
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
@@ -63,6 +70,7 @@ class Recognizer2D(BaseRecognizer):
                 x = nn.AdaptiveAvgPool2d(1)(x)
             x = x.reshape((x.shape[0], -1))
             x = x.reshape(x.shape + (1, 1))
+            #print("testing this part if self.backbone_from in ['torchvision', 'timm']: ")
 
         if self.with_neck:
             x = [
@@ -82,6 +90,7 @@ class Recognizer2D(BaseRecognizer):
             x = x.reshape((batches, num_segs, -1))
             # temporal average pooling
             x = x.mean(axis=1)
+            #("testing this part if self.feature_extraction: ")
             return x
 
         # When using `TSNHead` or `TPNHead`, shape is [batch_size, num_classes]
@@ -142,6 +151,7 @@ class Recognizer2D(BaseRecognizer):
         """Defines the computation performed at every call when evaluation and
         testing."""
         if self.test_cfg.get('fcn_test', False):
+            #print("using - if self.test_cfg.get('fcn_test', False):")
             # If specified, spatially fully-convolutional testing is performed
             assert not self.feature_extraction
             assert self.with_cls_head
@@ -633,6 +643,7 @@ class VCOPSRecognizer2D(Recognizer2D):
                  backbone,
                  cls_head=None,
                  vcop_head=None,
+                 contrastive_head=None,
                  neck=None,
                  train_cfg=None,
                  test_cfg=None,
@@ -659,13 +670,16 @@ class VCOPSRecognizer2D(Recognizer2D):
         x = self.extract_feat(imgs)
         vcop_loss = self.vcop_head(x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float(),
                                    return_loss=True)
-
+        q = x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float()
+       # print("x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float()", q.shape)
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
                 # apply adaptive avg pooling
                 x = nn.AdaptiveAvgPool2d(1)(x)
+                #print('used nn.AdaptiveAvgPool2d(1)(x)')
             x = x.reshape((x.shape[0], -1))
             x = x.reshape(x.shape + (1, 1))
+            #print(x.shape, 'x = x.reshape(x.shape + (1, 1))')
 
         if self.with_neck:
             x = [
@@ -677,7 +691,7 @@ class VCOPSRecognizer2D(Recognizer2D):
             x = x.squeeze(2)
             num_segs = 1
             losses.update(loss_aux)
-
+        #print('x.float() goes in to cls head', (x.float()).shape)
         cls_score = self.cls_head(x.float(), num_segs)
         # num_batch x num_clips x num_classes
         cls_score = cls_score.view(batches, -1, cls_score.size()[-1])
@@ -692,6 +706,28 @@ class VCOPSRecognizer2D(Recognizer2D):
         losses.update(loss_cls)
         losses.update(vcop_loss)
         return losses
+
+    def forward_teacher(self, imgs, emb_stage):
+        batches = imgs.shape[0]
+        imgs = imgs.reshape((-1, ) + imgs.shape[2:])
+        x = self.extract_feat(imgs)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze()
+        if emb_stage == 'backbone':
+            return x
+        elif emb_stage == 'proj_layer':
+            #print('returning proj features')
+            contrastive_features = self.contrastive_head(x.float())
+            proj_features = self.color_to_vanilla_projection_layer(contrastive_features)
+            return proj_features
+        else:
+            return self.contrastive_head(x.float())
+
+#------------------------------------------------------------------
+
+
+#------------------------------------------------------------------
+
 
 
 @RECOGNIZERS.register_module()

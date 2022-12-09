@@ -28,7 +28,7 @@ class EpicKitchensMultiContrastiveNonBinaryAugSpaces(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain] 
         for d in domain:
-            metadata_path = f"/data/abhishek/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path) 
         
         self.datapath = '/data/dataset/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 

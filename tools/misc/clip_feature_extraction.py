@@ -168,6 +168,7 @@ def main():
     # set cudnn benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False # for making same results on different GPUs
     cfg.data.test.test_mode = True
     cfg.data.test.data_prefix = args.video_root
 

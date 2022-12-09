@@ -156,6 +156,41 @@ def train_model(model,
             else EvalHook(val_dataloader, **eval_cfg)
         runner.register_hook(eval_hook)
 
+
+
+
+    # Found our mistake ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    # # for (n, p) in model.named_parameters():
+    # #     print(n, p.shape)
+    # # exit()
+
+    # if cfg.resume_from:
+    #     runner.resume(cfg.resume_from)
+    # elif cfg.load_from:
+    #     runner.load_checkpoint(cfg.load_from)
+    # runner_kwargs = dict()
+    # if cfg.omnisource:
+    #     runner_kwargs = dict(train_ratio=train_ratio)
+    # runner.run(data_loaders, cfg.workflow, 1, **runner_kwargs)
+
+    # print('\n\n\n#### epoch 1 ####\n\n\n')
+    # print(model.module.cls_head.fc_cls.weight[0,:16])
+    # print('\n\n')
+
+    # runner.run(data_loaders, cfg.workflow, 12, **runner_kwargs)
+
+    # print('\n\n\n#### epoch 13 ####\n\n\n')
+    # print(model.module.cls_head.fc_cls.weight[0,:16])
+    # print('\n\n')
+
+    # exit()
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
     if cfg.resume_from:
         runner.resume(cfg.resume_from)
     elif cfg.load_from:

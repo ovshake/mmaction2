@@ -45,13 +45,13 @@ data = dict(
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=dataset_type,
-        data_file='/data/abhishek/projects/golfdb/data/train_split_1.pkl',
-        vid_dir='/data/abhishek/data/videos_160',
+        data_file='/data/shinpaul14/projects/golfdb/data/train_split_1.pkl',
+        vid_dir='/data/shinpaul14/data/videos_160',
         seq_length=1),
     val=dict(
         type=dataset_type,
-        data_file='/data/abhishek/projects/golfdb/data/val_split_1.pkl',
-        vid_dir='/data/abhishek/data/videos_160',
+        data_file='/data/shinpaul14/projects/golfdb/data/val_split_1.pkl',
+        vid_dir='/data/shinpaul14/data/videos_160',
         seq_length=1,
         train=False),
     )

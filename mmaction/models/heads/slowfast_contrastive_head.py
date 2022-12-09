@@ -58,7 +58,12 @@ class ContrastiveHead(nn.Module):
         self.relu_1 = nn.ReLU(inplace=False)
         self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
         self.relu_2 = nn.ReLU(inplace=False)
+   
         self.encoder = nn.Sequential(self.fc1, self.relu_1, self.fc2, self.relu_2)
+        
+
+        
+        
         self.init_std = init_std
         self.num_segments = num_segments
         self.img_dim = img_dim
@@ -67,7 +72,9 @@ class ContrastiveHead(nn.Module):
 
 
     def forward(self, features):
+        # print('before rearrange',features.size())
         features = rearrange(features, '(b c) e -> b (c e)', c=self.num_segments)
+        # print('after rearrange',features.size())
         features = self.encoder(features)
         return features
 
