@@ -10,11 +10,13 @@ from .ssn_loss import SSNLoss
 from .slowfast_selfsupervised_loss import SlowFastSelfSupervisedLoss, ContrastiveLoss, SingleInstanceContrastiveLoss, SingleInstanceContrastiveLossv2, SimSiamCosineSimLoss
 from .multiple_contrastive_loss import MultipleContrastiveLoss, MultipleContrastiveSingleInstanceLoss, MultiplePathwayBaselineContrastiveLoss
 from .moco_loss import MocoLoss
+from .embedding_loss import EmbeddingLoss
 
 
 __all__ = [
     'BaseWeightedLoss', 'CrossEntropyLoss', 'NLLLoss', 'BCELossWithLogits',
     'BinaryLogisticRegressionLoss', 'BMNLoss', 'OHEMHingeLoss', 'SSNLoss',
     'HVULoss', 'SlowFastSelfSupervisedLoss', 'MultipleContrastiveLoss',
-    'ContrastiveLoss', 'MocoLoss', 'SingleInstanceContrastiveLoss', 'MultipleContrastiveSingleInstanceLoss', 'SingleInstanceContrastiveLossv2', 'SimSiamCosineSimLoss', 'MultiplePathwayBaselineContrastiveLoss'
+    'ContrastiveLoss', 'MocoLoss', 'SingleInstanceContrastiveLoss', 'MultipleContrastiveSingleInstanceLoss', 'SingleInstanceContrastiveLossv2', 'SimSiamCosineSimLoss', 'MultiplePathwayBaselineContrastiveLoss',
+    'EmbeddingLoss'
 ]

@@ -221,14 +221,3 @@ class MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
 
 
 
-
-
-
-
-
-
-
-
-
-
-

@@ -5,7 +5,7 @@ _base_ = [
 
 # fp16 training
 fp16 = dict()
-
+find_unused_parameters = True
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 fast_clip_len = 16
@@ -15,6 +15,7 @@ model = dict(
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
+                frozen_stages=2,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
             cls_head=dict(num_segments=fast_clip_len,
@@ -28,7 +29,6 @@ model = dict(
                                 name='',
                                 use_positives_in_denominator=True,
                                 use_row_sum_b=True),
-            pathway_A_temporal_pool=True,
             )
 
 # dataset settings

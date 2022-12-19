@@ -21,7 +21,7 @@ model = dict(
             cls_head=dict(num_segments=16, num_classes=8),
             vcop_head=dict(type='VCOPHead',
                            num_clips=vcops_num_clips,
-                           feature_size=2048 * 7 * 7))
+                           feature_size=2048))
 
 # dataset settings
 dataset_type = 'EpicKitchensMMSADA'
@@ -53,7 +53,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=5,
+    videos_per_gpu=8,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -83,5 +83,5 @@ lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings
 checkpoint_config = dict(interval=5)
-work_dir = './work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb/'
+work_dir = './work_dirs/test'
 total_epochs = 100

@@ -9,6 +9,18 @@ from einops import rearrange
 from .recognizer2d import Recognizer2D
 from torch.nn.functional import normalize
 
+def concat_all_gather(tensor, dim=0):
+	"""
+	Performs all_gather operation on the provided tensors.
+	*** Warning ***: torch.distributed.all_gather has no gradient.
+	"""
+	tensors_gather = [torch.ones_like(tensor)
+		for _ in range(torch.distributed.get_world_size())]
+	torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
+	tensors_gather[dist.get_rank()] = tensor
+	output = torch.cat(tensors_gather, dim=dim)
+	return output
+
 
 class TemporalPool(nn.Module):
         """Temporal pool module.
@@ -179,10 +191,25 @@ class TwoPathwaySelfSupervised1SimSiamCosSimRecognizer2D(Recognizer2D):
         loss_self_supervised = self.contrastive_loss(proj_features_A_features,
                                         contrastive_pathway_B_features.detach())
 
+        loss_barlow_twins = self.calculate_barlow_twins_loss(proj_features_A_features, contrastive_pathway_B_features)
         losses.update(loss_cls)
         losses.update(loss_self_supervised)
+        losses.update(loss_barlow_twins)
         return losses
 
+    def calculate_barlow_twins_loss(self, features_a, features_b, _lambda=0.0051):
+        if dist.is_initialized():
+            features_a = concat_all_gather(features_a)
+            features_b = concat_all_gather(features_b)
+        D = features_a.shape[1]
+        z_a_norm = (features_a - features_a.mean(0)) / features_a.std(0)
+        z_b_norm = (features_b - features_b.mean(0)) / features_b.std(0)
+        c = torch.mm(z_a_norm, z_b_norm.T)
+        c_diff = (c - torch.eye(D)).pow(2)
+        mask = torch.eye(D, dtype=bool)
+        c_diff[~mask] *= _lambda
+        loss = c_diff.sum()
+        return {"loss_barlow": loss}
 
     def train_step(self, data_batch, optimizer, **kwargs):
         """The iteration step during training.

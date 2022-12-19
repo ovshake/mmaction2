@@ -7,7 +7,9 @@ _base_ = [
 # fp16 training
 fp16 = dict()
 
+
 # model settings
+find_unused_parameters = True
 clip_len = 16
 
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
@@ -15,6 +17,7 @@ model = dict(
             type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
+                frozen_stages=2,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),

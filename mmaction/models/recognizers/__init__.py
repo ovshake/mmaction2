@@ -14,6 +14,7 @@ from .color_contrastive_recognizer2d import ColorSpatialSelfSupervised1Contrasti
 from .twopathway_recognizer2d import TwoPathwaySelfSupervised1SimSiamCosSimRecognizer2D
 
 from .multiplepathway_recognizer2d import MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D
+from .multiple_contrastive_distiller import MultipleContrastiveDistillerRecognizer
 
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D',
             'SlowFastSelfSupervisedContrastiveHeadRecognizer2D',
@@ -24,4 +25,4 @@ __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 
             'ColorSpatialSelfSupervised1ContrastiveHeadRecognizer2D', 'ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
             'ColorSpatialSelfSupervised1SimSiamInversePredictorContrastiveHeadRecognizer2D',
             'TwoPathwaySelfSupervised1SimSiamCosSimRecognizer2D',
-            'MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D']
+            'MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D' , 'MultipleContrastiveDistillerRecognizer']

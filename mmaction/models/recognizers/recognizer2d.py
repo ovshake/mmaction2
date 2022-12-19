@@ -5,7 +5,7 @@ from torch import nn
 from ..builder import RECOGNIZERS
 from .base import BaseRecognizer
 from .. import builder
-from einops import rearrange
+from einops import rearrange, reduce
 
 
 @RECOGNIZERS.register_module()
@@ -651,34 +651,21 @@ class VCOPSRecognizer2D(Recognizer2D):
         assert self.with_cls_head
         assert self.vcop_head
         batches = imgs.shape[0]
+        num_frames = imgs.shape[1] // self.num_clips
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         num_segs = imgs.shape[0] // batches
 
         losses = dict()
 
         x = self.extract_feat(imgs)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze()
         vcop_loss = self.vcop_head(x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float(),
                                    return_loss=True)
 
-        if self.backbone_from in ['torchvision', 'timm']:
-            if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
-                # apply adaptive avg pooling
-                x = nn.AdaptiveAvgPool2d(1)(x)
-            x = x.reshape((x.shape[0], -1))
-            x = x.reshape(x.shape + (1, 1))
-
-        if self.with_neck:
-            x = [
-                each.reshape((-1, num_segs) +
-                             each.shape[1:]).transpose(1, 2).contiguous()
-                for each in x
-            ]
-            x, loss_aux = self.neck(x, labels.squeeze())
-            x = x.squeeze(2)
-            num_segs = 1
-            losses.update(loss_aux)
-
+        # x = x.reshape((batches, self.num_clips, num_frames,-1))
         cls_score = self.cls_head(x.float(), num_segs)
+
         # num_batch x num_clips x num_classes
         cls_score = cls_score.view(batches, -1, cls_score.size()[-1])
         # num_batch x 1 x num_classes
