@@ -1,5 +1,5 @@
 _base_ = [ '../../../_base_/models/tsm_r50.py', '../../../_base_/schedules/sgd_tsm_50e.py', '../../../_base_/default_runtime.py' ]
-
+find_unused_parameters=True
 
 # fp16 training
 fp16 = dict()

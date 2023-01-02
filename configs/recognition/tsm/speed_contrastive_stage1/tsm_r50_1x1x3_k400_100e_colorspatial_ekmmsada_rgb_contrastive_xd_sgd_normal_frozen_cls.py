@@ -1,6 +1,6 @@
 _base_ = [ '../../../_base_/models/tsm_r50.py', '../../../_base_/schedules/sgd_tsm_50e.py', '../../../_base_/default_runtime.py' ]
 
-
+find_unused_parameters=True
 # fp16 training
 fp16 = dict()
 
@@ -56,7 +56,7 @@ pathway_B_pipeline = [
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter_video'),
+
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),

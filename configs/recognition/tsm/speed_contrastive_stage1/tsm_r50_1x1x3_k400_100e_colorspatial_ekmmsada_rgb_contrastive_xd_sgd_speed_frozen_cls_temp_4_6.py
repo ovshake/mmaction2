@@ -1,6 +1,6 @@
 _base_ = [ '../../../_base_/models/tsm_r50.py', '../../../_base_/schedules/sgd_tsm_50e.py', '../../../_base_/default_runtime.py' ]
 
-
+find_unused_parameters=True
 # fp16 training
 fp16 = dict()
 
@@ -26,10 +26,10 @@ model = dict(
             predictionMLP = dict(type='prediction_MLP',
                                 feature_size=2048),
             contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color',
-                                use_row_sum_a=True,
+                                name='color',temperature=4.6,
+                           
                                 use_positives_in_denominator=True,
-                                ))
+                              ))
 
 # dataset settings
 train_dataset = 'D1'
@@ -41,7 +41,7 @@ val_dataset_type = 'EpicKitchensMMSADA'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 pathway_A_pipeline = [
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1,multi_path_aug=True),
+    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
@@ -56,7 +56,7 @@ pathway_B_pipeline = [
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter_video'),
+
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -84,8 +84,8 @@ data = dict(
     train=dict(
         type=train_dataset_type,
         domain=train_dataset,
-        pathway_A=pathway_B_pipeline,
-        pathway_B=pathway_A_pipeline, # sgd pathway
+        pathway_A=pathway_A_pipeline,
+        pathway_B=pathway_B_pipeline, # sgd pathway
         clip_len=clip_len),
     val=dict(
         type=val_dataset_type,

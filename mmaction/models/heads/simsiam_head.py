@@ -16,6 +16,50 @@ import itertools
 
 
 @HEADS.register_module()
+class projection_MLP_no_BN(nn.Module):
+    def __init__(self,
+                 feature_size,
+                 num_segments,
+                 init_std=0.001,
+                 middle_layer_dim=2048,
+                 img_dim=2048,
+                 **kwargs):
+
+        super().__init__()
+
+
+        self.fc1 = nn.Linear(feature_size * num_segments , middle_layer_dim, bias=True)
+        self.BN1 = nn.BatchNorm1d(middle_layer_dim)
+        self.relu_1 = nn.ReLU(inplace=True)
+        self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
+        self.BN2 = nn.BatchNorm1d(img_dim)
+        self.relu_2 = nn.ReLU(inplace=True)
+        self.fc3 = nn.Linear(img_dim, img_dim, bias=True)
+
+
+        self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2, self.BN2, self.relu_2, self.fc3)
+
+        self.init_std = init_std
+        self.num_segments = num_segments
+        self.img_dim = img_dim
+        self.init_weights()
+
+
+
+    def forward(self, features):
+        #print(features.size())
+        features = rearrange(features, '(b c) e -> b (c e)', c=self.num_segments)
+        #print(features.size())
+        features = self.encoder(features)
+        return features
+
+    def init_weights(self):
+        """Initiate the parameters from scratch."""
+        normal_init(self.encoder, std=self.init_std)
+
+
+
+@HEADS.register_module()
 class projection_MLP(nn.Module):
     def __init__(self,
                  feature_size,

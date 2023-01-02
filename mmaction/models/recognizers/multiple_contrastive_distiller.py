@@ -50,21 +50,21 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
             self.vcop_network = None
 
         self.device = torch.device('cuda')
-        speed_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D1_test_D1/best_top1_acc_epoch_65.pth",
-            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D2_test_D2/best_top1_acc_epoch_30.pth",
-            "D3": "//data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_simsiam/tsm-k400-speed-simsiam_sp_pathway_normal/train_D3_test_D3/best_top1_acc_epoch_65.pth"
+        color_network_ckpt_dict = {
+            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D1_test_D1/latest.pth",
+            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D2_test_D2/latest.pth",
+            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D3_test_D3/latest.pth"
         }
 
-        color_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D1_test_D1/best_top1_acc_epoch_100.pth",
-            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D2_test_D2/best_top1_acc_epoch_85.pth",
-            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_simsiam/tsm-k400-color-simsiam_sp_pathway_B_color/train_D3_test_D3/best_top1_acc_epoch_55.pth",
+        speed_network_ckpt_dict = {
+            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D1_test_D1/latest.pth",
+            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D2_test_D2/latest.pth",
+            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D3_test_D3/latest.pth",
         }
         vcop_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D1_test_D1/best_top1_acc_epoch_95.pth",
-            "D2": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D2_test_D2/best_top1_acc_epoch_65.pth",
-            "D3": "/data/shinpaul14/projects/paul_mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_VCOP/tsm-vcop/train_D3_test_D3/best_top1_acc_epoch_80.pth"
+            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D1_test_D1/latest.pth",
+            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D2_test_D2/latest.pth",
+            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D3_test_D3/latest.pth"
         }
 
         # print(self.vcop_network)
@@ -238,7 +238,7 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
 
         losses.update(loss_emb)
 
-        losses.update(loss_cls)
+        #losses.update(loss_cls)
         
         return losses
 

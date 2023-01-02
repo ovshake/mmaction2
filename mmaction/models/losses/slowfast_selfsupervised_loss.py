@@ -166,6 +166,8 @@ class SingleInstanceContrastiveLossv2(BaseWeightedLoss):
         mask = torch.eye(batch_size, dtype=torch.bool)
         cross_similarity = self._calculate_cosine_similarity(features_a, features_b)
         a_similarity = self._calculate_cosine_similarity(features_a, features_a)
+        # print(type(a_similarity))
+        # print(a_similarity)
         a_similarity[mask] = 0.
         b_similarity = self._calculate_cosine_similarity(features_b, features_b)
         b_similarity[mask] = 0.
@@ -211,10 +213,10 @@ class SingleInstanceContrastiveLossv2(BaseWeightedLoss):
 
 @LOSSES.register_module()
 class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
-    def __init__(self, loss_weight=1.0, temperature=0.07, name=None, #previous 0.5 moco-v2 - 0.07 
+    def __init__(self, loss_weight=1.0, temperature=0.2, name=None, # other contrastiv method temperature=0.07
                 use_row_sum_a=False,
                 use_row_sum_b=False,
-                use_positives_in_denominator=False,):
+                use_positives_in_denominator=False):
         super().__init__()
         self.loss_weight = loss_weight
         self.temperature = temperature
@@ -235,7 +237,6 @@ class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
 
 
     def _forward(self, features_a, features_b):
-
         if dist.is_initialized():
             features_a = concat_all_gather(features_a)
             features_b = concat_all_gather(features_b)
@@ -243,6 +244,8 @@ class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
         mask = torch.eye(batch_size, dtype=torch.bool)
         cross_similarity = self._calculate_cosine_similarity(features_a, features_b)
         a_similarity = self._calculate_cosine_similarity(features_a, features_a)
+        # print(type(a_similarity))
+        # print(a_similarity)
         a_similarity[mask] = 0.
         b_similarity = self._calculate_cosine_similarity(features_b, features_b)
         b_similarity[mask] = 0.
@@ -282,6 +285,7 @@ class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
         else:
             ret_dict = {f'{self.name}_contrastive_loss': loss}
         return ret_dict
+
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @LOSSES.register_module()
@@ -294,14 +298,14 @@ class SimSiamCosineSimLoss(BaseWeightedLoss):
     def D(self, p, z):
         p = normalize(p, dim=1)
         z = normalize(z, dim=1)
-        return  - (p * z).sum(dim=1).mean()
+        return  - (p * z).sum(dim=1).mean() /2
 
-    def _forward(self, features_a, features_b):
-        loss = self.D(features_a, features_b)
+    def _forward(self, features_a, features_b, number):
+        loss = self.D(features_a, features_b.detach())
         if not self.name:
             ret_dict = {'cossim_loss': loss}
         else:
-            ret_dict = {f'{self.name}_cossim_loss': loss}
+            ret_dict = {f'{number}_{self.name}_cossim_loss': loss}
         return ret_dict
 
 
@@ -322,3 +326,7 @@ class SimSiamLoss(BaseWeightedLoss):
         else:
             ret_dict = {f'{self.name}_cossim_loss': loss}
         return ret_dict
+
+
+
+

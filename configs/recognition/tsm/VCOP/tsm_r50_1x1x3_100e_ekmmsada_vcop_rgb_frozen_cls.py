@@ -3,19 +3,19 @@ _base_ = [ '../../../_base_/models/tsm_r50.py', '../../../_base_/schedules/sgd_t
 # model settings
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 clip_len = 8
-
+find_unused_parameters=True
 # fp16 training
 fp16 = dict()
 
 vcops_num_clips = 3
 model = dict(
-            type='VCOPSRecognizer2D_no_cls',
+            type='VCOPSRecognizer2D_cls_no',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 shift_div=8),
             num_clips=vcops_num_clips,
-            cls_head=None,
+            cls_head=dict(num_segments=clip_len, num_classes=8),
             vcop_head=dict(type='VCOPHead',
                            num_clips=vcops_num_clips,
                            feature_size=2048 * 7 * 7))

@@ -1,6 +1,6 @@
 _base_ = [ '../../../_base_/models/tsm_r50.py', '../../../_base_/schedules/sgd_tsm_50e.py', '../../../_base_/default_runtime.py' ]
 
-
+find_unused_parameters=True
 # fp16 training
 fp16 = dict()
 
@@ -25,10 +25,11 @@ model = dict(
                                 feature_size=2048),
             predictionMLP = dict(type='prediction_MLP',
                                 feature_size=2048),
-            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color',
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2_moco_t',
+                                name='color',temperature=3.0,
+                           
                                 use_positives_in_denominator=True,
-                                use_row_sum_b=True))
+                              ))
 
 # dataset settings
 train_dataset = 'D1'
@@ -44,7 +45,6 @@ pathway_A_pipeline = [
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter_video', multi_color_aug_k=True),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),

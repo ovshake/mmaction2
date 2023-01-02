@@ -252,7 +252,7 @@ def inference_onnx(ckpt_path, distributed, data_loader, batch_size):
     sess = rt.InferenceSession(ckpt_path)
     results = []
     dataset = data_loader.dataset
-    prog_bar = mmcv.ProgressBar(len(dataset))
+    prog_bar = mmcv.ProgressBar(len(dataset))# et rid of this line
     for data in data_loader:
         imgs = data['imgs'].cpu().numpy()
         onnx_result = sess.run(None, {net_feed_input[0]: imgs})[0]
@@ -345,11 +345,14 @@ def main():
     if args.tensorrt:
         outputs = inference_tensorrt(args.checkpoint, distributed, data_loader,
                                      dataloader_setting['videos_per_gpu'])
+
     elif args.onnx:
         outputs = inference_onnx(args.checkpoint, distributed, data_loader,
                                  dataloader_setting['videos_per_gpu'])
+
     else:
         outputs = inference_pytorch(args, cfg, distributed, data_loader)
+    
 
     rank, _ = get_dist_info()
     if rank == 0:

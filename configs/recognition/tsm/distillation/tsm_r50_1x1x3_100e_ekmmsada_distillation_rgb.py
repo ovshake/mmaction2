@@ -7,7 +7,7 @@ find_unused_parameters=True
 fp16 = dict()
 
 # model settings
-clip_len = 16
+clip_len = 8
 """
 cls_head=dict(
         type='TSMHead',
@@ -22,42 +22,62 @@ cls_head=dict(
 """
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
 speed_model = dict(
-            type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
+            type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=None,
-            contrastive_head=dict(type='ContrastiveHead',
+            cls_head=dict(num_segments=clip_len,
+                        num_classes=8,
+                        spatial_type=None,
+                        in_channels=2048,
+                        dropout_ratio=0.0),
+            projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
                                 feature_size=2048),
-            contrastive_loss=None)
+            predictionMLP = dict(type='prediction_MLP',
+                                feature_size=2048),
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
+                                name='color',temperature=5.0,
+                           
+                                use_positives_in_denominator=True,
+            ))
 
 color_model = dict(
-            type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
+            type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=None,
-            contrastive_head=dict(type='ContrastiveHead',
+            cls_head=dict(num_segments=clip_len,
+                        num_classes=8,
+                        spatial_type=None,
+                        in_channels=2048,
+                        dropout_ratio=0.0),
+            projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
                                 feature_size=2048),
-            contrastive_loss=None)
+            predictionMLP = dict(type='prediction_MLP',
+                                feature_size=2048),
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2_moco_t',
+                                name='color',temperature=5.0,
+                           
+                                use_positives_in_denominator=True,)
+            )
 
 
 
 vcop_model = dict(
-            type='VCOPSRecognizer2D',
+            type='VCOPSRecognizer2D_cls_no',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True), # not sure about this 
                 shift_div=8),
             num_clips=3,
-            cls_head=None,
+            cls_head=dict(num_segments=clip_len, num_classes=8),
             contrastive_head=None,
             vcop_head=dict(type='VCOPHead',
                 num_clips=3,
