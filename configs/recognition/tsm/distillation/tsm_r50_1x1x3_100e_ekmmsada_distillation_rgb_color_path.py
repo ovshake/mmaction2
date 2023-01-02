@@ -7,7 +7,7 @@ find_unused_parameters=True
 fp16 = dict()
 
 # model settings
-clip_len = 16
+clip_len = 8
 """
 cls_head=dict(
         type='TSMHead',
@@ -21,32 +21,30 @@ cls_head=dict(
 
 """
 load_from = 'https://download.openmmlab.com/mmaction/recognition/tsm/tsm_r50_1x1x8_50e_kinetics400_rgb/tsm_r50_1x1x8_50e_kinetics400_rgb_20200607-af7fb746.pth'
-speed_model = dict(
-            type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
-            backbone=dict(type='ResNetTSM',
-                depth=50,
-                norm_eval=False,
-                norm_cfg=dict(type='SyncBN', requires_grad=True),
-                shift_div=8),
-            cls_head=None,
-            contrastive_head=dict(type='ContrastiveHead',
-                                num_segments=clip_len,
-                                feature_size=2048),
-            contrastive_loss=None)
 
 
 color_model = dict(
-            type='ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D',
+            type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=None,
-            contrastive_head=dict(type='ContrastiveHead',
+            cls_head=dict(num_segments=clip_len,
+                        num_classes=8,
+                        spatial_type=None,
+                        in_channels=2048,
+                        dropout_ratio=0.0),
+            projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
                                 feature_size=2048),
-            contrastive_loss=None)
+            predictionMLP = dict(type='prediction_MLP',
+                                feature_size=2048),
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2_moco_t',
+                                name='color',temperature=5.0,
+                           
+                                use_positives_in_denominator=True,)
+            )
 
 
 
@@ -66,8 +64,9 @@ model = dict(
                                 feature_size=2048),
             emb_loss=dict(type='EmbeddingLoss'),
             domain='D1',
-            speed_network=None,
-            color_network=color_model
+   
+            color_network=color_model, 
+     
             )
 # dataset settings
 train_dataset = 'D1'
@@ -129,7 +128,7 @@ evaluation = dict(
 optimizer = dict(
     lr=0.0075 * (4 / 8) * (12 / 8),  # this lr is used for 8 gpus
 )
-optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2)) 
+optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 
 # runtime settings

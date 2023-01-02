@@ -311,7 +311,7 @@ class SimSiamCosineSimLoss(BaseWeightedLoss):
 
 @LOSSES.register_module()
 class SimSiamLoss(BaseWeightedLoss):
-    def __init__(self, loss_weight=1.0, name=None,):
+    def __init__(self, loss_weight=1.0, name=None):
         super().__init__()
         self.loss_weight = loss_weight
         self.name = name
@@ -319,7 +319,7 @@ class SimSiamLoss(BaseWeightedLoss):
 
 
 
-    def _forward(self, p1, p2, z1, z2 ):
+    def _forward(self, p1, p2, z1, z2):
         loss = -(self.criterion_L(p1, z2).mean() + self.criterion_L(p2, z1).mean()) * 0.5
         if not self.name:
             ret_dict = {'cossim_loss': loss}

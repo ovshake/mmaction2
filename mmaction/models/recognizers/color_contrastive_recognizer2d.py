@@ -658,7 +658,7 @@ class SimSiamRecognizer2D(Recognizer2D):
         losses = dict()
 
         x_pathway_A = self.extract_feat(imgs_pathway_A)
-        
+
         x_pathway_B = self.extract_feat(imgs_pathway_B)
         x_pathway_A = nn.AdaptiveAvgPool2d(1)(x_pathway_A)
         x_pathway_B = nn.AdaptiveAvgPool2d(1)(x_pathway_B)
@@ -667,7 +667,7 @@ class SimSiamRecognizer2D(Recognizer2D):
 
         contrastive_pathway_A_features = self.projectionMLP(x_pathway_A.float())
         contrastive_pathway_B_features = self.projectionMLP(x_pathway_B.float())
-       
+
         cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
         gt_labels = labels.squeeze()
         # print(cls_score_pathway_A)
@@ -696,6 +696,7 @@ class SimSiamRecognizer2D(Recognizer2D):
             return x
         elif emb_stage == 'proj_layer':
             print('returning proj features')
+            import ipdb; ipdb.set_trace()
             contrastive_features = self.projectionMLP(x.float())
             proj_features = self.projectionMLP(contrastive_features)
             return proj_features
@@ -1152,7 +1153,7 @@ class ColorSpatialSelfSupervised1SimSiamInversePredictorContrastiveHeadRecognize
         z = normalize(z, dim=1)
         return  - (p * z).sum(dim=1).mean()
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @RECOGNIZERS.register_module()
 class SimSiamRecognizerWithSimSiamLoss2D(Recognizer2D):

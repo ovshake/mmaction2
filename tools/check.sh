@@ -9,7 +9,7 @@ exp_section="trash_frozen"
 #config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/color_symmetric_contrstive/tsm_r50_1x1x3_k400_100e_colorspatial_ekmmsada_rgb_fast_simsiam_frozen_cls_batch.py"
 #config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/color_symmetric_contrstive/tsm_r50_1x1x3_k400_100e_colorspatial_ekmmsada_rgb_contrastive_xd_sgd_color_frozen_cls.py'
 
-config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/distillation/tsm_r50_1x1x3_100e_ekmmsada_distillation_rgb.py'
+config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/late_fusion/tsm_r50_1x1x3_100e_latefusion_speed_color.py'
 
 #config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/tsm_baseline/tsm_r50_1x1x3_100e_ekmmsada_resfrozen_rgb_decay_0.py'
 # exp_name="tsm-k400-color-contrastive_xd_sgd_color_temp_5"

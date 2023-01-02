@@ -2,6 +2,7 @@ import copy
 import os.path as osp
 
 import mmcv
+import os
 
 from .base import BaseDataset
 from .builder import DATASETS
@@ -27,7 +28,7 @@ class EpicKitchensMMSADA(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/{os.path.expanduser('~').split('/')[-1]}/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA'):
@@ -172,13 +173,13 @@ class EpicKitchensTemporalSpatialMMSADA(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/{os.path.expanduser('~').split('/')[-1]}/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA') and False:
             self.datapath = '/local_datasets/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb'
         else:
-            self.datapath = '/local_datasets/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb'
+            self.datapath = '/data/dataset/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb'
         self.domain_to_participant_map = {"P08": "D1",  "P01": "D2", "P22": "D3"}
         super().__init__(ann_file=None, pipeline=pathway_A, test_mode=test_mode, sample_by_class=sample_by_class)
         self.filename_tmpl = filename_tmpl
@@ -195,13 +196,13 @@ class EpicKitchensTemporalSpatialMMSADA(BaseDataset):
                 participant_id = line['participant_id']
                 video_id = line['video_id']
                 start_frame = int(line['start_frame'])
-         
+
                 end_frame = int(line['stop_frame'])
-             
+
                 label = line['verb_class']
                 frame_dir =  f"{self.datapath}/{self.split}/{self.domain_to_participant_map[participant_id]}/{video_id}"
                 total_frames = end_frame - start_frame + 1
-                
+
                 label = int(label)
                 #print('start', start_frame, 'end', end_frame)
                 if total_frames < 29:
@@ -281,7 +282,7 @@ class EpicKitchensTemporalSpatialMMSADA_not_same_start(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/{os.path.expanduser('~').split('/')[-1]}/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA') and False:
@@ -304,13 +305,13 @@ class EpicKitchensTemporalSpatialMMSADA_not_same_start(BaseDataset):
                 participant_id = line['participant_id']
                 video_id = line['video_id']
                 start_frame = int(line['start_frame'])
-         
+
                 end_frame = int(line['stop_frame'])
-             
+
                 label = line['verb_class']
                 frame_dir =  f"{self.datapath}/{self.split}/{self.domain_to_participant_map[participant_id]}/{video_id}"
                 total_frames = end_frame - start_frame + 1
-                
+
                 label = int(label)
                 #print('start', start_frame, 'end', end_frame)
                 if total_frames < 29:
