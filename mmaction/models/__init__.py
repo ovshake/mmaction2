@@ -20,7 +20,7 @@ from .losses import (BCELossWithLogits, BinaryLogisticRegressionLoss, BMNLoss,
                      SSNLoss, SlowFastSelfSupervisedLoss)
 from .necks import TPN
 from .recognizers import (AudioRecognizer, BaseRecognizer, Recognizer2D,
-                          Recognizer3D, SlowFastSelfSupervisedRecognizer2D, MultipleContrastiveRecognizer2D)
+                          Recognizer3D, SlowFastSelfSupervisedRecognizer2D, MultipleContrastiveRecognizer2D, LateFusionRecognizer)
 from .roi_extractors import SingleRoIExtractor3D
 from .skeleton_gcn import BaseGCN, SkeletonGCN
 
@@ -41,5 +41,5 @@ __all__ = [
     'TimeSformerHead', 'DividedSpatialAttentionWithNorm',
     'DividedTemporalAttentionWithNorm', 'FFNWithNorm', 'ACRNHead', 'BaseGCN',
     'SkeletonGCN', 'SlowFastSelfSupervisedRecognizer2D', 'SelfSupervisedTSMHead',
-    'SlowFastSelfSupervisedLoss', 'MultipleContrastiveRecognizer2D', 'ContrastiveHead',
+    'SlowFastSelfSupervisedLoss', 'MultipleContrastiveRecognizer2D', 'ContrastiveHead', 'LateFusionRecognizer',
 ]

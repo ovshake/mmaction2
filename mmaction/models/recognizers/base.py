@@ -40,7 +40,9 @@ class BaseRecognizer(nn.Module, metaclass=ABCMeta):
         # record the source of the backbone
         self.backbone_from = 'mmaction2'
 
-        if backbone['type'].startswith('mmcls.'):
+        if not backbone:
+            self.backbone = backbone
+        elif backbone['type'].startswith('mmcls.'):
             try:
                 import mmcls.models.builder as mmcls_builder
             except (ImportError, ModuleNotFoundError):
@@ -123,7 +125,9 @@ class BaseRecognizer(nn.Module, metaclass=ABCMeta):
 
     def init_weights(self):
         """Initialize the model network weights."""
-        if self.backbone_from in ['mmcls', 'mmaction2']:
+        if not self.backbone:
+            pass
+        elif self.backbone_from in ['mmcls', 'mmaction2']:
             self.backbone.init_weights()
         elif self.backbone_from in ['torchvision', 'timm']:
             warnings.warn('We do not initialize weights for backbones in '

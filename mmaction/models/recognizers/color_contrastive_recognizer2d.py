@@ -695,6 +695,7 @@ class SimSiamRecognizer2D(Recognizer2D):
             return x
         elif emb_stage == 'proj_layer':
             print('returning proj features')
+            import ipdb; ipdb.set_trace()
             contrastive_features = self.projectionMLP(x.float())
             proj_features = self.projectionMLP(contrastive_features)
             return proj_features

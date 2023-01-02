@@ -78,8 +78,8 @@ class prediction_MLP(nn.Module):
         self.BN1 = nn.BatchNorm1d(middle_layer_dim)
         self.relu_1 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
-       
-        
+
+
 
         self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2)
 
@@ -167,8 +167,8 @@ class prediction_MLP_bias_false(nn.Module):
         self.BN1 = nn.BatchNorm1d(middle_layer_dim)
         self.relu_1 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(middle_layer_dim, img_dim)
-       
-        
+
+
 
         self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2)
 
@@ -253,8 +253,8 @@ class prediction_MLP_multi(nn.Module):
         self.relu_1 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
         self.relu_2 = nn.ReLU(inplace=True)
-       
-        
+
+
 
         self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2,self.relu_2)
 
