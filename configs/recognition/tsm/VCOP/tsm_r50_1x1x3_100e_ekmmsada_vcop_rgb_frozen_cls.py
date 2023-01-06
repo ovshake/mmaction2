@@ -7,7 +7,7 @@ find_unused_parameters=True
 # fp16 training
 fp16 = dict()
 
-vcops_num_clips = 3
+vcops_num_clips = 6
 model = dict(
             type='VCOPSRecognizer2D_cls_no',
             backbone=dict(type='ResNetTSM',
@@ -50,7 +50,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=3,
+    videos_per_gpu=6,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -73,7 +73,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (4 / 8) * (3 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (6 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

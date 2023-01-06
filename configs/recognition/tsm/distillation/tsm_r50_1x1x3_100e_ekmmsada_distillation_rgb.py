@@ -25,13 +25,16 @@ speed_model = dict(
             type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
-                norm_eval=False,
+                norm_eval=False,frozen_stages=4,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=clip_len,
+            cls_head=dict(type='TSMHead',
+                        num_segments=clip_len,
                         num_classes=8,
                         spatial_type=None,
+                        consensus=dict(type='AvgConsensus', dim=1),
                         in_channels=2048,
+                        init_std=0.001,
                         dropout_ratio=0.0),
             projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
@@ -40,48 +43,49 @@ speed_model = dict(
                                 feature_size=2048),
             contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
                                 name='color',temperature=5.0,
-                           
                                 use_positives_in_denominator=True,
-            ))
+                              ))
+
 
 color_model = dict(
             type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
-                norm_eval=False,
+                norm_eval=False,frozen_stages=4,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=clip_len,
+            cls_head=dict(type='TSMHead',
+                        num_segments=clip_len,
                         num_classes=8,
                         spatial_type=None,
+                        consensus=dict(type='AvgConsensus', dim=1),
                         in_channels=2048,
+                        init_std=0.001,
                         dropout_ratio=0.0),
             projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
                                 feature_size=2048),
             predictionMLP = dict(type='prediction_MLP',
                                 feature_size=2048),
-            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2_moco_t',
+            contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
                                 name='color',temperature=5.0,
-                           
-                                use_positives_in_denominator=True,)
-            )
+                                use_positives_in_denominator=True,
+                              ))
 
 
 
 vcop_model = dict(
-            type='VCOPSRecognizer2D_cls_no',
+                type='VCOPSRecognizer2D_cls_no',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True), # not sure about this 
                 shift_div=8),
             num_clips=3,
-            cls_head=dict(num_segments=clip_len, num_classes=8),
-            contrastive_head=None,
+            cls_head=None,
             vcop_head=dict(type='VCOPHead',
-                num_clips=3,
-                feature_size=2048 * 7 * 7))
+                           num_clips=3,
+                           feature_size=2048 * 7 * 7))
 
 model = dict(
             type='MultipleContrastiveDistillerRecognizer',
@@ -102,6 +106,7 @@ model = dict(
             speed_network=speed_model,
             color_network=color_model, 
             vcop_network=vcop_model,
+            type_loss='stack'
             )
 # dataset settings
 train_dataset = 'D1'

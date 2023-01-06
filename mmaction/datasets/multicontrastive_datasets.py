@@ -31,7 +31,7 @@ class EpicKitchensMultiContrastiveNonBinaryAugSpaces(BaseDataset):
             metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path) 
         
-        self.datapath = '/data/dataset/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb' 
+        self.datapath = '/local_datasets/EPIC_KITCHENS_UDA/frames_rgb_flow/rgb'
         self.domain_to_participant_map = {"P08": "D1",  "P01": "D2", "P22": "D3"}
 
         super().__init__(ann_file=None, pipeline=pipeline, test_mode=test_mode, sample_by_class=sample_by_class)

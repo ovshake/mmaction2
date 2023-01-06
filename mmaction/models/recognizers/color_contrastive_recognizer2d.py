@@ -687,21 +687,23 @@ class SimSiamRecognizer2D(Recognizer2D):
         return losses
 
     def forward_teacher(self, imgs, emb_stage):
-        batches = imgs.shape[0]
+        batches = imgs.shape[0] # batchsize 
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         x = self.extract_feat(imgs)
-        x = nn.AdaptiveAvgPool2d(1)(x)
-        x = x.squeeze()
-        if emb_stage == 'backbone':
-            return x
-        elif emb_stage == 'proj_layer':
-            print('returning proj features')
-            import ipdb; ipdb.set_trace()
-            contrastive_features = self.projectionMLP(x.float())
-            proj_features = self.projectionMLP(contrastive_features)
-            return proj_features
-        else:
-            return self.projectionMLP(x.float())
+        x = nn.AdaptiveAvgPool2d(1)(x).squeeze()
+        # x = nn.AdaptiveAvgPool2d(1)(x)
+        # x = x.squeeze()
+        # if emb_stage == 'backbone':
+        #     return x
+        # elif emb_stage == 'proj_layer':
+        #     print('returning proj features')
+        #     import ipdb; ipdb.set_trace()
+        #     contrastive_features = self.projectionMLP(x.float())
+        #     proj_features = self.projectionMLP(contrastive_features)
+        #     return proj_features
+        # else:
+        #     return self.projectionMLP(x.float())
+        return x
 
 
     def train_step(self, data_batch, optimizer, **kwargs):

@@ -744,7 +744,8 @@ class VCOPSRecognizer2D_cls_no(Recognizer2D):
                         test_cfg=test_cfg)
 
         self.num_clips = num_clips
-        self.vcop_head = builder.build_head(vcop_head)
+        if vcop_head:
+            self.vcop_head = builder.build_head(vcop_head)
 
     def forward_train(self, imgs, labels, **kwargs):
         """Defines the computation performed at every call when training."""
@@ -759,6 +760,7 @@ class VCOPSRecognizer2D_cls_no(Recognizer2D):
         x = self.extract_feat(imgs)
         vcop_loss = self.vcop_head(x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float(),
                                    return_loss=True)
+        
         q = x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float()
        # print("x.reshape(batches, self.num_clips, num_segs // self.num_clips, -1).float()", q.shape)
         if self.backbone_from in ['torchvision', 'timm']:

@@ -36,7 +36,7 @@ train_dataset = 'D1'
 val_dataset = 'D2'
 test_dataset = None
 dataset_type = 'RawframeDataset'
-train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA'
+train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA_ensemble'
 val_dataset_type = 'EpicKitchensMMSADA'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
@@ -85,7 +85,7 @@ data = dict(
         type=train_dataset_type,
         domain=train_dataset,
         pathway_A=pathway_A_pipeline,
-        pathway_B=pathway_B_pipeline, # sgd pathway
+        # pathway_B=pathway_B_pipeline, # sgd pathway
         clip_len=clip_len),
     val=dict(
         type=val_dataset_type,

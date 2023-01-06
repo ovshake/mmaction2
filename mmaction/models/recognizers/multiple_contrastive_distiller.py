@@ -23,7 +23,7 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
                  speed_network=None,
                  color_network=None,
                  vcop_network=None,
-                 vcop_head=None,
+                 type_loss='stack',
                  contrastive_head=None,
                  emb_loss=None,
                  neck=None,
@@ -34,50 +34,30 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         super().__init__(backbone=backbone, cls_head=cls_head, train_cfg=train_cfg, test_cfg=test_cfg)
 
         self.emb_stage = emb_stage
+        self.type_loss=type_loss
         if speed_network:
-            self.speed_network = builder.build_model(speed_network).eval()
-        else:
-            self.speed_network = None
 
+        #speed_ckpt_path = "/data/jongmin/projects/mmaction2/work_/speed/{domain}/latest.pth"
+            speed_ckpt_path="/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_{domain}_test_{domain}/latest.pth"
+            self.speed_network = builder.build_model(speed_network)
+            speed_network_state_dict = torch.load(speed_ckpt_path.format(domain=domain))
+            self.speed_network.load_state_dict(speed_network_state_dict["state_dict"], strict=False)
+        else:
+            self.speed_network=speed_network
         if color_network:
-            self.color_network = builder.build_model(color_network).eval()
+            color_ckpt_path="/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_{domain}_test_{domain}/latest.pth"
+            self.color_network = builder.build_model(color_network)
+            color_network_state_dict = torch.load(color_ckpt_path.format(domain=domain))
+            self.color_network.load_state_dict(color_network_state_dict["state_dict"], strict=False)
         else:
-            self.color_network = None
-
+            self.color_network=color_network
         if vcop_network:
-            self.vcop_network = builder.build_model(vcop_network).eval()
+            vcop_ckpt_path='/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_{domain}_test_{domain}/latest.pth'
+            self.vcop_network = builder.build_model(vcop_network)
+            vcop_network_state_dict = torch.load(vcop_ckpt_path.format(domain=domain))
+            self.vcop_network.load_state_dict(vcop_network_state_dict["state_dict"], strict=False)
         else:
-            self.vcop_network = None
-
-        self.device = torch.device('cuda')
-        color_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D1_test_D1/latest.pth",
-            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D2_test_D2/latest.pth",
-            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_V1/tsm-k400-color-contrastive_xd_sgd_color_temp_50/train_D3_test_D3/latest.pth"
-        }
-
-        speed_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D1_test_D1/latest.pth",
-            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D2_test_D2/latest.pth",
-            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_speed_contrastive_V1/tsm-k400-speed-contrastive_xd_sgd_speed_temp_5/train_D3_test_D3/latest.pth",
-        }
-        vcop_network_ckpt_dict = {
-            "D1": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D1_test_D1/latest.pth",
-            "D2": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D2_test_D2/latest.pth",
-            "D3": "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop/tsm-k400-vcop/train_D3_test_D3/latest.pth"
-        }
-
-        # print(self.vcop_network)
-        if self.speed_network:
-            self.speed_network.load_state_dict(torch.load(speed_network_ckpt_dict[domain]), strict=False)
-            self.speed_contrastive_emb_head = builder.build_head(contrastive_head)
-        if self.color_network:
-            self.color_network.load_state_dict(torch.load(color_network_ckpt_dict[domain]), strict=False)
-            self.color_contrastive_emb_head = builder.build_head(contrastive_head)
-        if self.vcop_network:
-            self.vcop_network.load_state_dict(torch.load((vcop_network_ckpt_dict[domain])), strict=False)
-            vcop_head = dict(type='VCOPHead',num_clips=3, feature_size=2048*7*7 )
-            self.vcop_emb_head = builder.build_head(vcop_head)
+            self.vcop_network = vcop_network
 
         self.emb_loss = builder.build_loss(emb_loss)
 
@@ -176,12 +156,18 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         with torch.no_grad():
             if self.speed_network:
                 t_speed_emb = self.speed_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
+                # print('teacher speed')
+                # print(t_speed_emb.shape)
                 t_embs.append(t_speed_emb)
             if self.color_network:
                 t_color_emb = self.color_network.forward_teacher(imgs, emb_stage=self.emb_stage).detach()
+                # print('teacher color')
+                # print(t_color_emb.shape)
                 t_embs.append(t_color_emb)
             if self.vcop_network:
                 t_vcop_emb = self.vcop_network.forward_teacher(imgs, emb_stage='backbone').detach()
+                # print('vcop teacher')
+                # print(t_vcop_emb.shape)
                 t_embs.append(t_vcop_emb) # the output feature from the vcop trained tsm not head .... 
         
         # print("t_embs[0] --- teacher embedding size", t_embs[0].shape)
@@ -203,14 +189,19 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
             x = x.reshape(x.shape + (1, 1))
         x = nn.AdaptiveAvgPool2d(1)(x)
         x = x.squeeze()
+        #print('student size', x.shape)
         # print('student  is above with nn.AdaptiveAvgPool2d(1)(x), x.squeeze()')
         # print('x = x.squeeze() -  this goes in to the contrastive head',x.shape)
         s_embs = []
         if self.speed_network:
-            s_speed_emb = self.speed_contrastive_emb_head(x.float())
+            # s_speed_emb = self.speed_contrastive_emb_head(x.float())
+            # s_embs.append(s_speed_emb)
+            # print(s_speed_emb.shape)
+            s_speed_emb=x
             s_embs.append(s_speed_emb)
         if self.color_network:
-            s_color_emb = self.color_contrastive_emb_head(x.float())
+            s_color_emb = x #self.color_contrastive_emb_head(x.float())
+            #print(s_color_emb.shape)
             s_embs.append(s_color_emb)
         if self.vcop_network:
             s_vcop_emb =x
@@ -225,13 +216,23 @@ class MultipleContrastiveDistillerRecognizer(Recognizer2D):
         # if t_embs==s_embs:
         #     print('same')
         # print(torch.equal(t_embs, s_embs))
-        t_embs = torch.vstack(t_embs)
-        s_embs = torch.vstack(s_embs)
-        
+        if self.type_loss == 'stack':
+            t_embs = torch.vstack(t_embs)
+            s_embs = torch.vstack(s_embs)
+            loss_emb = self.emb_loss(t_embs, s_embs)
+        else:
+
+        #----------------------
+            loss_emb={}
+            color_loss_emb = self.emb_loss(t_color_emb, s_color_emb)
+            speed_loss_emb = self.emb_loss(t_speed_emb, s_speed_emb)
+            vcop_loss_emb = self.emb_loss(t_vcop_emb, s_vcop_emb)
+            loss_emb['loss_embedding']=color_loss_emb['loss_embedding']+speed_loss_emb['loss_embedding']+vcop_loss_emb['loss_embedding']
+        #--------------------
         # print('t_embs --- teacher embedding shape ', t_embs.shape)
         # print('s_embs --- student embedding shape ', s_embs.shape)
 
-        loss_emb = self.emb_loss(t_embs, s_embs)
+        #loss_emb = self.emb_loss(t_embs, s_embs)
         cls_score = self.cls_head(x.float(), num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)

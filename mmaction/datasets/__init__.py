@@ -17,7 +17,7 @@ from .rawframe_dataset import RawframeDataset
 from .rawvideo_dataset import RawVideoDataset
 from .ssn_dataset import SSNDataset
 from .video_dataset import VideoDataset
-from .epickitchens_mmsada import EpicKitchensMMSADA, EpicKitchensSlowFastMMSADA, EpicKitchensTemporalSpatialMMSADA, EpicKitchensMultipleContrastiveSpaces,EpicKitchensTemporalSpatialMMSADA_not_same_start, EpicKitchensTemporalSpatialMMSADA_val_temp
+from .epickitchens_mmsada import EpicKitchensMMSADA, EpicKitchensSlowFastMMSADA, EpicKitchensTemporalSpatialMMSADA, EpicKitchensMultipleContrastiveSpaces,EpicKitchensTemporalSpatialMMSADA_not_same_start, EpicKitchensTemporalSpatialMMSADA_val_temp, EpicKitchensTemporalSpatialMMSADA_ensemble
 from .k400_ucf_hmdb import Kinetics400UCFHMDB, Kinetics400UCFHMDBTwoPathway, Kinetics400UCFHMDBMultipleContrastiveSpaces
 from .multicontrastive_datasets import EpicKitchensMultiContrastiveNonBinaryAugSpaces
 from .golfdb import GolfDB
@@ -31,4 +31,6 @@ __all__ = [
     'EpicKitchensTemporalSpatialMMSADA', 'Kinetics400UCFHMDB', 'Kinetics400UCFHMDBTwoPathway',
     'Kinetics400UCFHMDBMultipleContrastiveSpaces', 'EpicKitchensMultipleContrastiveSpaces',
     'EpicKitchensMultiContrastiveNonBinaryAugSpaces', 'GolfDB','EpicKitchensTemporalSpatialMMSADA_not_same_start','EpicKitchensTemporalSpatialMMSADA_val_temp'
+    'EpicKitchensTemporalSpatialMMSADA_ensemble'
 ]
+
