@@ -14,7 +14,8 @@ model = dict(
                 norm_eval=False,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=8, num_classes=8))
+            cls_head=dict(num_segments=8, num_classes=8),
+            test_cfg=dict(average_clips='prob', feature_extraction=True))
 
 # dataset settings
 dataset_type = 'EpicKitchensMMSADA'
