@@ -1,7 +1,7 @@
-exp_name="tsm-k400-color-contrastive_xd_sgd_color_temp_50"
-exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_color_contrastive_b23_V2_cls"
-#config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/late_fusion/tsm_r50_1x1x3_100e_latefusion_vcop_color_input_normal_cls_norm.py'
-config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/tsm_baseline/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
+exp_name="tsm-k400-color-contrastive_xd_sgd_color_vcop_fusion_norm"
+exp_section="tsm_r50_1x1x3_100e_ekmmsada_rgb_color_speed_late_fusion"
+config='/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/late_fusion/tsm_r50_1x1x3_100e_latefusion_vcop_color_input_normal_cls_norm.py'
+#config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/tsm_baseline/tsm_r50_1x1x3_100e_ekmmsada_rgb.py"
 
 
 work_dir="/data/shinpaul14/projects/mmaction2/work_dirs/$exp_section/$exp_name"

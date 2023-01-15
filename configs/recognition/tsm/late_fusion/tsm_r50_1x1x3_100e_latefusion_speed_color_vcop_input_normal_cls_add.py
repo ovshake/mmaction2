@@ -73,7 +73,7 @@ vcop_model = dict(
                            feature_size=2048 * 7 * 7))
 
 model = dict(
-            type='LateFusionRecognizer_all',
+            type='LateFusionRecognizer_combine_all',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,frozen_stages=4,
@@ -82,7 +82,8 @@ model = dict(
             cls_head=dict(type='TSMHead',num_segments=clip_len,
                         num_classes=8,dropout_ratio=0.0,
                         spatial_type=None,
-                        in_channels=2048 * 3),
+                        in_channels=2048),
+            fusion_type='avg', # add or avg 
             speed_network=speed_model,
             color_network=color_model,
             

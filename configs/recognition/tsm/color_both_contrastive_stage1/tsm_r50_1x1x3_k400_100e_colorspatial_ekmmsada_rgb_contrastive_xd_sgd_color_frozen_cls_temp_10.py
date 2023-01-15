@@ -26,7 +26,7 @@ model = dict(
             predictionMLP = dict(type='prediction_MLP',
                                 feature_size=2048),
             contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color',temperature=3.0,
+                                name='color',temperature=1.0,
                                 use_positives_in_denominator=True,
                                 ))
 

@@ -57,11 +57,11 @@ class Recognizer2D(BaseRecognizer):
         num_segs = imgs.shape[0] // batches
         
         x = self.extract_feat(imgs)
-        q = 1
-        if q==1:
-            ss = x[0][0].detach().cpu().numpy()
-            numpy.savetxt( '/data/shinpaul14/projects/mmaction2/speed.txt', ss)
-            q+=1
+        # q = 1
+        # if q==1:
+        #     ss = x[0][0].detach().cpu().numpy()
+        #     numpy.savetxt( '/data/shinpaul14/projects/mmaction2/speed.txt', ss)
+        #     q+=1
    
         x = nn.AdaptiveAvgPool2d(1)(x)
         if self.backbone_from in ['torchvision', 'timm']:

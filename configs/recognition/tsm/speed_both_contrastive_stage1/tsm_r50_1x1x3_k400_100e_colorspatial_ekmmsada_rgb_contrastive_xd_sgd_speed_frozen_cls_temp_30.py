@@ -19,14 +19,15 @@ model = dict(
                         num_classes=8,
                         spatial_type=None,
                         in_channels=2048,
-                        dropout_ratio=0),
+                        dropout_ratio=0.0),
             projectionMLP=dict(type='projection_MLP',
                                 num_segments=clip_len,
                                 feature_size=2048),
             predictionMLP = dict(type='prediction_MLP',
                                 feature_size=2048),
             contrastive_loss=dict(type='SingleInstanceContrastiveLossv2',
-                                name='color',temperature=2.0,
+                                name='color', temperature=3.0,
+                    
                                 use_positives_in_denominator=True,
                                 ))
 
@@ -40,11 +41,10 @@ val_dataset_type = 'EpicKitchensMMSADA'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
 pathway_A_pipeline = [
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1),
+    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1,multi_path_aug=True),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter_video'),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -52,11 +52,11 @@ pathway_A_pipeline = [
 ]
 
 pathway_B_pipeline = [
-    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1),
+    dict(type='SampleFrames', clip_len=clip_len, frame_interval=1, num_clips=1, temporal_aug=True),
     dict(type='RawFrameDecode'),
     dict(type='Resize', scale=(-1, 256)),
     dict(type='RandomCrop', size=224),
-    dict(type='ColorJitter_video',multi_color_aug_k=True),
+   
     dict(type='Normalize', **img_norm_cfg),
     dict(type='FormatShape', input_format='NCHW'),
     dict(type='Collect', keys=['imgs', 'label'], meta_keys=[]),
@@ -84,8 +84,8 @@ data = dict(
     train=dict(
         type=train_dataset_type,
         domain=train_dataset,
-        pathway_A=pathway_A_pipeline,
-        pathway_B=pathway_B_pipeline, # sgd pathway
+        pathway_A=pathway_B_pipeline,
+        pathway_B=pathway_A_pipeline, # sgd pathway
         clip_len=clip_len),
     val=dict(
         type=val_dataset_type,
@@ -102,8 +102,12 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
+    type='SGD',
+    constructor='TSMFreezeFCLayerOptimizerConstructor',
+    paramwise_cfg=dict(fc_lr5=False),
     lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
-)
+    momentum=0.9,
+    weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])
 

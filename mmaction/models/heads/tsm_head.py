@@ -199,7 +199,7 @@ class TSMHead_norm(BaseHead):
         Returns:
             torch.Tensor: The classification scores for input samples.
         """
-        x = x.norm(dim=1)
+     
         # [N * num_segs, in_channels, 7, 7]
         if self.avg_pool is not None:
             x = self.avg_pool(x)
@@ -208,8 +208,9 @@ class TSMHead_norm(BaseHead):
         # [N * num_segs, in_channels]
         if self.dropout is not None:
             x = self.dropout(x)
-        
-        #x = x.norm(dim=1)
+        # print(x.shape)
+        x = F.normalize(x, dim=None)
+        # x = x.norm(dim=None, keepdim=True)
         #print('x',x.shape)
         
         # [N * num_segs, num_classes]
