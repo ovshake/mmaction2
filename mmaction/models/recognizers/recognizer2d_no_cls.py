@@ -290,7 +290,6 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
             backbone['type'] = backbone['type'][6:]
             self.backbone = mmcls_builder.build_backbone(backbone)
             self.backbone_from = 'mmcls'
-            print('mmcls@@@@@@@@@@@@@@@@')
         elif backbone['type'].startswith('torchvision.'):
             try:
                 import torchvision.models
@@ -304,7 +303,6 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
             self.backbone.classifier = nn.Identity()
             self.backbone.fc = nn.Identity()
             self.backbone_from = 'torchvision'
-            print('torchvision@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
         elif backbone['type'].startswith('timm.'):
             try:
                 import timm
@@ -316,17 +314,13 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
             backbone['num_classes'] = 0
             self.backbone = timm.create_model(backbone_type, **backbone)
             self.backbone_from = 'timm'
-            print('timm@@@@@@@@@@@@@@@@@@@@')
         else:
             self.backbone = builder.build_backbone(backbone)
-            print('mmaction2@@@@@@@@@@@@@@@@')
 
         if neck is not None:
             self.neck = builder.build_neck(neck)
 
- 
         self.cls_head = builder.build_head(cls_head) if cls_head else None
-        
 
         self.projectionMLP = builder.build_head(projectionMLP)
 
@@ -341,9 +335,9 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
         # aux_info is the list of tensor names beyond 'imgs' and 'label' which
         # will be used in train_step and val_step, data_batch should contain
         # these tensors
-        # self.aux_info = []
-        # if train_cfg is not None and 'aux_info' in train_cfg:
-        #     self.aux_info = train_cfg['aux_info']
+        self.aux_info = []
+        if train_cfg is not None and 'aux_info' in train_cfg:
+            self.aux_info = train_cfg['aux_info']
         # max_testing_views should be int
         self.max_testing_views = None
         if test_cfg is not None and 'max_testing_views' in test_cfg:
@@ -380,15 +374,15 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
                 imgs, label = self.blending(imgs, label)
 
             imgs_pathway_A, imgs_pathway_B = imgs
-            return self.forward_train(imgs_pathway_A, imgs_pathway_B, **kwargs)
+            return self.forward_train(imgs_pathway_A, imgs_pathway_B, label, **kwargs)
 
         return self.forward_test(imgs, **kwargs)
 
 
-    def forward_train(self, imgs_pathway_A, imgs_pathway_B, **kwargs):
+    def forward_train(self, imgs_pathway_A, imgs_pathway_B, labels, **kwargs):
         """Defines the computation performed at every call when training."""
 
-        # assert self.with_cls_head
+        assert self.with_cls_head
         batches = imgs_pathway_A.shape[0]
         imgs_pathway_A = imgs_pathway_A.reshape((-1, ) + imgs_pathway_A.shape[2:])
         imgs_pathway_B = imgs_pathway_B.reshape((-1, ) + imgs_pathway_B.shape[2:])
@@ -397,6 +391,7 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
         losses = dict()
 
         x_pathway_A = self.extract_feat(imgs_pathway_A)
+
         x_pathway_B = self.extract_feat(imgs_pathway_B)
         x_pathway_A = nn.AdaptiveAvgPool2d(1)(x_pathway_A)
         x_pathway_B = nn.AdaptiveAvgPool2d(1)(x_pathway_B)
@@ -406,34 +401,42 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
         contrastive_pathway_A_features = self.projectionMLP(x_pathway_A.float())
         contrastive_pathway_B_features = self.projectionMLP(x_pathway_B.float())
 
-        #cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
-        #gt_labels = labels.squeeze()
-        #loss_cls = self.cls_head.loss(cls_score_pathway_A, gt_labels, **kwargs)
+        cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
+        gt_labels = labels.squeeze()
+        # print(cls_score_pathway_A)
+        # print('-------------')
+        # print(self.cls_head)
+        loss_cls = self.cls_head.loss(cls_score_pathway_A, gt_labels, **kwargs)
         predict_features_A_features = self.predictionMLP(contrastive_pathway_A_features)
         #proj_features_A_features = self.color_to_vanilla_projection_layer(contrastive_pathway_A_features)
 
         loss_self_supervised = self.color_contrastive_loss(predict_features_A_features,
                                         contrastive_pathway_B_features.detach())
 
-        #losses.update(loss_cls)
+        #print(loss_cls)
+        #if we update the cls loss the model falls in to the wrong place
+        losses.update(loss_cls) 
         losses.update(loss_self_supervised)
         return losses
 
     def forward_teacher(self, imgs, emb_stage):
-        batches = imgs.shape[0]
+        batches = imgs.shape[0] # batchsize 
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         x = self.extract_feat(imgs)
-        x = nn.AdaptiveAvgPool2d(1)(x)
-        x = x.squeeze()
-        if emb_stage == 'backbone':
-            return x
-        elif emb_stage == 'proj_layer':
-            print('returning proj features')
-            contrastive_features = self.projectionMLP(x.float())
-            proj_features = self.projectionMLP(contrastive_features)
-            return proj_features
-        else:
-            return self.projectionMLP(x.float())
+        x = nn.AdaptiveAvgPool2d(1)(x).squeeze()
+        # x = nn.AdaptiveAvgPool2d(1)(x)
+        # x = x.squeeze()
+        # if emb_stage == 'backbone':
+        #     return x
+        # elif emb_stage == 'proj_layer':
+        #     print('returning proj features')
+        #     import ipdb; ipdb.set_trace()
+        #     contrastive_features = self.projectionMLP(x.float())
+        #     proj_features = self.projectionMLP(contrastive_features)
+        #     return proj_features
+        # else:
+        #     return self.projectionMLP(x.float())
+        return x
 
 
     def train_step(self, data_batch, optimizer, **kwargs):
@@ -528,18 +531,14 @@ class SimSiamRecognizer2D_no_cls(Recognizer2D_no_cls):
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
 
         # should have cls_head if not extracting features
-        cls_score = torch.rand(30,8) # mannually added to change the frame to 8 
+        cls_score = self.cls_head(x.float(), num_segs)
 
-
-        # if self.cls_head is not None:
-        #     cls_score = self.cls_head(x.float(), num_segs)
-        #     cls_score = torch.zeros_like(cls_score)
-            # assert cls_score.size()[0] % batches == 0
-            # # calculate num_crops automatically
-            # cls_score = self.average_clip(cls_score,
-            #                             cls_score.size()[0] // batches)
- 
+        assert cls_score.size()[0] % batches == 0
+        # calculate num_crops automatically
+        cls_score = self.average_clip(cls_score,
+                                      cls_score.size()[0] // batches)
         return cls_score
+
 
 
 

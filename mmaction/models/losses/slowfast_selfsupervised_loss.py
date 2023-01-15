@@ -211,6 +211,7 @@ class SingleInstanceContrastiveLossv2(BaseWeightedLoss):
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
+
 @LOSSES.register_module()
 class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
     def __init__(self, loss_weight=1.0, temperature=0.2, name=None, # other contrastiv method temperature=0.07
@@ -243,30 +244,32 @@ class SingleInstanceContrastiveLossv2_moco_t(BaseWeightedLoss):
         batch_size = features_a.shape[0]
         mask = torch.eye(batch_size, dtype=torch.bool)
         cross_similarity = self._calculate_cosine_similarity(features_a, features_b)
-        a_similarity = self._calculate_cosine_similarity(features_a, features_a)
+        if self.use_row_sum_a:
+
+            a_similarity = self._calculate_cosine_similarity(features_a, features_a)
         # print(type(a_similarity))
         # print(a_similarity)
-        a_similarity[mask] = 0.
-        b_similarity = self._calculate_cosine_similarity(features_b, features_b)
-        b_similarity[mask] = 0.
+            a_similarity[mask] = 0.
+            a_similarity = a_similarity / self.temperature
+            a_similarity = a_similarity.exp()
+            row_sum_a = a_similarity.sum(0)
+        if self.use_row_sum_b:
+            b_similarity = self._calculate_cosine_similarity(features_b, features_b)
+            b_similarity[mask] = 0.
+            b_similarity = b_similarity / self.temperature
+            b_similarity = b_similarity.exp()
+            row_sum_b = b_similarity.sum(0)
 
         cross_similarity = cross_similarity / self.temperature
         cross_similarity = cross_similarity.exp()
 
-
-        a_similarity = a_similarity / self.temperature
-        a_similarity = a_similarity.exp()
-
-        b_similarity = b_similarity / self.temperature
-        b_similarity = b_similarity.exp()
 
         # Isolating the diagonal elements because we expect the positive
         # elements to be in the diagonals
         diag_elems = torch.diagonal(cross_similarity, 0)
 
         row_sum_cross = cross_similarity.sum(0)  # Taking sum across row
-        row_sum_a = a_similarity.sum(0)
-        row_sum_b = b_similarity.sum(0)
+  
 
         # We are taking
         denominator = row_sum_cross

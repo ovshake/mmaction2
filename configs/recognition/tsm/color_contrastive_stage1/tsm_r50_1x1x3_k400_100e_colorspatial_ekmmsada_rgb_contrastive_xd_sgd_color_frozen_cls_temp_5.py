@@ -78,7 +78,7 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=12,
+    videos_per_gpu=23,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -105,7 +105,7 @@ optimizer = dict(
     type='SGD',
     constructor='TSMFreezeFCLayerOptimizerConstructor',
     paramwise_cfg=dict(fc_lr5=False),
-    lr=0.0075 * (12 / 8) * (4 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (23 / 8) * (4 / 8),  # this lr is used for 8 gpus
     momentum=0.9,
     weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))

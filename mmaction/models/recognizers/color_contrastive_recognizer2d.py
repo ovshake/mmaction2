@@ -784,6 +784,8 @@ class SimSiamRecognizer2D(Recognizer2D):
             avg_pool = nn.AdaptiveAvgPool2d(1)
             x = avg_pool(x)
             # squeeze dimensions
+            print(x.shape)
+            print('---------')
             x = x.reshape((batches, num_segs, -1))
             # temporal average pooling
             x = x.mean(axis=1)

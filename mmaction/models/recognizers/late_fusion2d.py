@@ -157,12 +157,25 @@ class LateFusionRecognizer_all(Recognizer2D):
         color_features = nn.AdaptiveAvgPool2d(1)(color_features).squeeze()
         speed_features = nn.AdaptiveAvgPool2d(1)(speed_features).squeeze()
         vcop_features = nn.AdaptiveAvgPool2d(1)(vcop_features).squeeze()
+        # print('vcop_features', vcop_features.shape)
+        # color_features = color_features.norm(dim=None)
+        # speed_features = speed_features.norm(dim=None)
+        # vcop_features = vcop_features.norm(dim=None)
+        # print(vcop_features.shape)
+        # aaa = vcop_features.norm(dim=1)[:, None]
+        # print('-------------',aaa.shape)
+        #print(vcop_features.norm(dim=1)[:, None].shape)
         # print('color_features size', color_features.shape)
         # print('speed_features size', speed_features.shape)
         # print('vcop_features size', vcop_features.shape)
 
         losses = dict()
         fused_features = torch.cat((color_features, speed_features,vcop_features), dim=1)
+       
+        # fused_features = fused_features.norm(dim=None)
+       
+        #print('--------',fused_features.shape)
+        #fused_features = fused_features.norm(dim=None)[:, None]
         cls_scores = self.cls_head(fused_features.float(), num_segs)
         gt_labels = gt_labels.squeeze()
         loss_cls = self.cls_head.loss(cls_scores, gt_labels, **kwargs)
@@ -182,7 +195,13 @@ class LateFusionRecognizer_all(Recognizer2D):
         color_features = nn.AdaptiveAvgPool2d(1)(color_features).squeeze()
         speed_features = nn.AdaptiveAvgPool2d(1)(speed_features).squeeze()
         vcop_features = nn.AdaptiveAvgPool2d(1)(vcop_features).squeeze()
+
         fused_features = torch.cat((color_features, speed_features,vcop_features), dim=1)
+
+        # fused_features = fused_features.norm(dim=None)
+    
+        # fused_features = fused_features.norm(dim=1)[:, None]
+
         cls_score = self.cls_head(fused_features.float(), num_segs)
         assert cls_score.size()[0] % batches == 0
         # calculate num_crops automatically

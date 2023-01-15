@@ -79,7 +79,7 @@ model = dict(
                 norm_eval=False,frozen_stages=4,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=clip_len,
+            cls_head=dict(type='TSMHead_norm',num_segments=clip_len,
                         num_classes=8,dropout_ratio=0.0,
                         spatial_type=None,
                         in_channels=2048 * 3),
