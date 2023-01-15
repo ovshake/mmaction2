@@ -120,6 +120,7 @@ data = dict(
         pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
+        feature_extraction=True,
         domain='D1',
         pipeline=val_pipeline
     ))
