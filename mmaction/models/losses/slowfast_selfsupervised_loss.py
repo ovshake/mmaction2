@@ -299,8 +299,8 @@ class SimSiamCosineSimLoss(BaseWeightedLoss):
         self.name = name
 
     def D(self, p, z):
-        p = normalize(p, dim=1)
-        z = normalize(z, dim=1)
+        p = F.normalize(p, dim=1, eps=1e-8)
+        z = F.normalize(z, dim=1,eps=1e-8)
         return  - (p * z).sum(dim=1).mean() /2
 
     def _forward(self, features_a, features_b, number):
@@ -314,16 +314,17 @@ class SimSiamCosineSimLoss(BaseWeightedLoss):
 
 @LOSSES.register_module()
 class SimSiamLoss(BaseWeightedLoss):
-    def __init__(self, loss_weight=1.0, name=None):
+    def __init__(self, loss_weight=1.0, name=None,):
         super().__init__()
         self.loss_weight = loss_weight
         self.name = name
-        self.criterion_L = nn.CosineSimilarity(dim=1).cuda()#????
-
+    def D(self,p,z):
+        return - F.cosine_similarity(p, z.detach(), dim=-1, eps=1e-8).mean()
+    
 
 
     def _forward(self, p1, p2, z1, z2):
-        loss = -(self.criterion_L(p1, z2).mean() + self.criterion_L(p2, z1).mean()) * 0.5
+        loss = self.D(p1, z2) / 2 + self.D(p2, z1) /2
         if not self.name:
             ret_dict = {'cossim_loss': loss}
         else:

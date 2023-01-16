@@ -9,7 +9,7 @@ from einops import rearrange
 from .recognizer2d import Recognizer2D
 from torch.nn.functional import normalize
 import torch.distributed as dist
-from .color_contrastive_recognizer2d import ColorSpatialSelfSupervised1SimSiamContrastiveHeadRecognizer2D
+
 from mmcv.runner import (DistSamplerSeedHook, EpochBasedRunner, OptimizerHook,
                          build_optimizer, get_dist_info)
 import numpy as np

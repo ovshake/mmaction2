@@ -21,7 +21,7 @@ vcop_model = dict(
                            feature_size=2048 * 7 * 7))
 
 
-speed_model = dict(
+color_model = dict(
             type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
@@ -58,7 +58,7 @@ model = dict(
                         spatial_type=None,
                         in_channels=2048 * 2),
             vcop_network=vcop_model,
-            speed_network=speed_model,
+            color_network=color_model,
             domain='D1',
             )
 

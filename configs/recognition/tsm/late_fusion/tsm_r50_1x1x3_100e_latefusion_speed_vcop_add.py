@@ -6,22 +6,11 @@ fp16 = dict()
 
 # model settings
 clip_len = 8
-vcops_num_clips=3
-vcop_model = dict(
-                type='VCOPSRecognizer2D_cls_no',
-            backbone=dict(type='ResNetTSM',
-                depth=50,
-                norm_eval=False,frozen_stages=4,
-                norm_cfg=dict(type='SyncBN', requires_grad=True), # not sure about this 
-                shift_div=8),
-            num_clips=3,
-            cls_head=None,
-            vcop_head=dict(type='VCOPHead',
-                           num_clips=vcops_num_clips,
-                           feature_size=2048 * 7 * 7))
 
 
-speed_model = dict(
+
+
+color_model = dict(
             type='SimSiamRecognizer2D',
             backbone=dict(type='ResNetTSM',
                 depth=50,
@@ -45,20 +34,37 @@ speed_model = dict(
                                 name='color',temperature=5.0,
                                 use_positives_in_denominator=True,
                               ))
+vcops_num_clips=3
+
+vcop_model = dict(
+                type='VCOPSRecognizer2D_cls_no',
+            backbone=dict(type='ResNetTSM',
+                depth=50,
+                norm_eval=False,frozen_stages=4,
+                norm_cfg=dict(type='SyncBN', requires_grad=True), # not sure about this 
+                shift_div=8),
+            num_clips=3,
+            cls_head=None,
+            vcop_head=dict(type='VCOPHead',
+                           num_clips=vcops_num_clips,
+                           feature_size=2048 * 7 * 7))
 
 model = dict(
-            type='LateFusionRecognizer_vcop',
+            type='LateFusionRecognizer_combine_two',
             backbone=dict(type='ResNetTSM',
                 depth=50,
                 norm_eval=False,frozen_stages=4,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 shift_div=8),
-            cls_head=dict(num_segments=clip_len,
+            cls_head=dict(type='TSMHead',num_segments=clip_len,
                         num_classes=8,dropout_ratio=0.0,
                         spatial_type=None,
-                        in_channels=2048 * 2),
-            vcop_network=vcop_model,
-            speed_network=speed_model,
+                        in_channels=2048),
+            fusion_type='add', # add or avg 
+     
+            color_network=color_model,
+            
+            vcop_network= vcop_model,
             domain='D1',
             )
 
@@ -67,7 +73,7 @@ train_dataset = 'D1'
 val_dataset = 'D1'
 test_dataset = None
 dataset_type = 'RawframeDataset'
-train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA'
+train_dataset_type = 'EpicKitchensTemporalSpatialMMSADA_ensemble'
 val_dataset_type = 'EpicKitchensMMSADA'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_bgr=False)
@@ -112,14 +118,15 @@ val_pipeline = [
     dict(type='ToTensor', keys=['imgs'])
 ]
 data = dict(
-    videos_per_gpu=12,
+    videos_per_gpu=24,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
         type=train_dataset_type,
         domain=train_dataset,
         pathway_A=input_pipeline,
-        pathway_B=input_pipeline,
+        # pathway_B=input_pipeline,
+        # pathway_C=input_pipeline,
         clip_len=clip_len),
     val=dict(
         type=val_dataset_type,
@@ -136,7 +143,7 @@ evaluation = dict(
 
 # optimizer
 optimizer = dict(
-    lr=0.0075 * (4 / 8) * (12 / 8),  # this lr is used for 8 gpus
+    lr=0.0075 * (4 / 8) * (24 / 8),  # this lr is used for 8 gpus
 )
 optimizer_config = dict(grad_clip=dict(max_norm=20, norm_type=2))
 lr_config = dict(policy='step', step=[40, 80])

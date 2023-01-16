@@ -88,11 +88,17 @@ class TSMHead(BaseHead):
         Returns:
             torch.Tensor: The classification scores for input samples.
         """
+        #only effective for TSM baseline ----------------v
         # [N * num_segs, in_channels, 7, 7]
         if self.avg_pool is not None:
             x = self.avg_pool(x)
+        #     print('pool')
+        
         # [N * num_segs, in_channels, 1, 1]
         x = torch.flatten(x, 1)
+       #only effective for TSM baseline -----------------^
+
+
         # [N * num_segs, in_channels]
         if self.dropout is not None:
             x = self.dropout(x)

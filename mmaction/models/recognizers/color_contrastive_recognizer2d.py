@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from torch import nn
-
+import torch.nn.functional as F
 from ..builder import RECOGNIZERS
 from .base import BaseRecognizer
 from .. import builder
@@ -691,6 +691,7 @@ class SimSiamRecognizer2D(Recognizer2D):
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         x = self.extract_feat(imgs)
         x = nn.AdaptiveAvgPool2d(1)(x).squeeze()
+        x = F.normalize(x, dim=1, eps=1e-8)
         # x = nn.AdaptiveAvgPool2d(1)(x)
         # x = x.squeeze()
         # if emb_stage == 'backbone':

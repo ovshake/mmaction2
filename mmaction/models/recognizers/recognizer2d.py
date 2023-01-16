@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from torch import nn
-
+import torch.nn.functional as F
 from ..builder import RECOGNIZERS
 from .base import BaseRecognizer
 from .. import builder
@@ -804,15 +804,17 @@ class VCOPSRecognizer2D_cls_no(Recognizer2D):
         x = self.extract_feat(imgs)
         x = nn.AdaptiveAvgPool2d(1)(x)
         x = x.squeeze()
+        x = F.normalize(x, dim=1, eps=1e-8)
+
         if emb_stage == 'backbone':
             return x
-        elif emb_stage == 'proj_layer':
-            #print('returning proj features')
-            contrastive_features = self.contrastive_head(x.float())
-            proj_features = self.color_to_vanilla_projection_layer(contrastive_features)
-            return proj_features
-        else:
-            return self.contrastive_head(x.float())
+        # elif emb_stage == 'proj_layer':
+        #     #print('returning proj features')
+        #     contrastive_features = self.contrastive_head(x.float())
+        #     proj_features = self.color_to_vanilla_projection_layer(contrastive_features)
+        #     return proj_features
+        # else:
+        #     return self.contrastive_head(x.float())
 
 #------------------------------------------------------------------
 
