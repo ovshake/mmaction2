@@ -1,6 +1,6 @@
 from collections import Counter
 
-csv_path = '/data/adithya/data/kinetics.csv'
+csv_path = '/data/jongmin/projects/dataset/kinetics.csv'
 
 with open(csv_path, 'r') as f:
     lines = f.readlines() 

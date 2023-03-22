@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --gres=gpu:4
 #SBATCH -J check_loss
-#SBATCH -o /data/shinpaul14/outputs/check_loss.out
-#SBATCH -e /data/shinpaul14/outputs/check_loss.err
+#SBATCH -o /data/jongmin/outputs/check_loss.out
+#SBATCH -e /data/jongmin/outputs/check_loss.err
 #SBATCH --time 2-0
 #SBATCH -p batch_grad
 #SBATCH -x ai[5,10]
@@ -10,7 +10,7 @@
 #SBATCH --mem 64G
 
 
-. /data/shinpaul14/anaconda3/etc/profile.d/conda.sh
+. /data/jongmin/anaconda3/etc/profile.d/conda.sh
 conda activate action-dg
 
 
@@ -19,7 +19,7 @@ conda activate action-dg
 
 exp_name="overfit_07"
 exp_section="overfit"
-config="/data/shinpaul14/projects/mmaction2/configs/recognition/tsm/overfit/tsm_r50_1x1x3_k400_100e_overfit.py"
+config="/data/jongmin/projects/mmaction2_paul_work/configs/recognition/tsm/overfit/tsm_r50_1x1x3_k400_100e_overfit.py"
 
 
-bash /data/shinpaul14/projects/mmaction2/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/shinpaul14/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='val' data.val.domain='val' total_epochs=500 --validate --deterministic
+bash /data/jongmin/projects/mmaction2_paul_work/tools/dist_train.sh $config 4 --cfg-options work_dir=/data/jongmin/projects/mmaction2_paul_work/work_dirs/$exp_section/$exp_name/train_D1_test_D1 data.train.domain='val' data.val.domain='val' total_epochs=500 --validate --deterministic

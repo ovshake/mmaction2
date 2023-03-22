@@ -18,9 +18,12 @@ from .multiple_contrastive_distiller import MultipleContrastiveDistillerRecogniz
 from .recognizer2d_no_cls import Recognizer2D_no_cls , VCOPSRecognizer2D_no_cls, SimSiamRecognizer2D_no_cls, SimSiamRecognizer2D_vinilla
 from .multi_simsiam_recognizer2d import Mult_SimSiam_Recognizer2D
 from .late_fusion2d import LateFusionRecognizer, LateFusionRecognizer_all,LateFusionRecognizer_vcop, LateFusionRecognizer_norm_before, LateFusionRecognizer_norm_after, LateFusionRecognizer_combine_all, LateFusionRecognizer_combine_two,LateFusionRecognizer_combine_speed_color
+from .L2D import L2DRecognizer2D
+from .asymmetric_simsiam_recognizer2d import asymmetrical_SimSiamRecognizer2D
+
 
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D',
-            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D',
+            'SlowFastSelfSupervisedContrastiveHeadRecognizer2D','L2DRecognizer2D',
             'ColorSpatialSelfSupervisedContrastiveHeadRecognizer2D',
             'MultipleContrastiveRecognizer2D', 'SlowFastSelfSupervisedMOCORecognizer2D',
             'ColorSpatialSelfSupervisedMOCOContrastiveHeadRecognizer2D',
@@ -31,4 +34,5 @@ __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 
             'MultiplePathwaySelfSupervised1SimSiamCosSimRecognizer2D' , 'MultipleContrastiveDistillerRecognizer','SimSiamRecognizer2D',
             'VCOPSRecognizer2D_no_cls', 'VCOPSRecognizer2D', 'Recognizer2D_no_cls', 'SimSiamRecognizer2D_vinilla','Mult_SimSiam_Recognizer2D',
             'SimSiamRecognizerWithSimSiamLoss2D', 'LateFusionRecognizer','LateFusionRecognizer_all','LateFusionRecognizer_vcop', 'LateFusionRecognizer_norm_before', 'LateFusionRecognizer_norm_after','LateFusionRecognizer_combine_all'
-            ,'LateFusionRecognizer_combine_two','LateFusionRecognizer_combine_speed_color']
+            ,'LateFusionRecognizer_combine_two','LateFusionRecognizer_combine_speed_color',
+            'asymmetrical_SimSiamRecognizer2D']

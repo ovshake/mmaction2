@@ -3,7 +3,7 @@ import pickle
 import os
 import pandas as pd
 import random
-x = "/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/D1_train.pkl"
+x = "/data/jongmin/projects/SADA_Domain_Adaptation_Splits/D1_train.pkl"
 df = pd.read_pickle(x)
 print(df)
 q = 0

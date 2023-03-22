@@ -324,6 +324,12 @@ class SimSiamLoss(BaseWeightedLoss):
 
 
     def _forward(self, p1, p2, z1, z2):
+        if dist.is_initialized():
+            p1 = concat_all_gather(p1)
+            p2 = concat_all_gather(p2)
+            z1 = concat_all_gather(z1)
+            z2 = concat_all_gather(z2)
+     
         loss = self.D(p1, z2) / 2 + self.D(p2, z1) /2
         if not self.name:
             ret_dict = {'cossim_loss': loss}

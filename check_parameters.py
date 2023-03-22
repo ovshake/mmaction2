@@ -27,7 +27,7 @@ model = dict(
                                 name='color',
                                 use_positives_in_denominator=True,
                                 use_row_sum_b=True))
-check_point = '/data/shinpaul14/projects/mmaction2/work_dirs/trash1/trash1/train_D1_test_D1/epoch_5.pth'
+check_point = '/data/jongmin/projects/mmaction2_paul_work/work_dirs/trash1/trash1/train_D1_test_D1/epoch_5.pth'
 model = builder.build_model(model)
 model.load_state_dict(torch.load(check_point)['state_dict'])
 print(model)

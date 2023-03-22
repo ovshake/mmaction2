@@ -30,7 +30,7 @@ class EpicKitchensSlowFastMMSADA(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/jongmin/projects/SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA'):
@@ -502,7 +502,7 @@ class EpicKitchensTemporalSpatialMMSADA_val_temp(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/jongmin/projects/SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA') and False:
@@ -608,7 +608,7 @@ class EpicKitchensMultipleContrastiveSpaces(BaseDataset):
         if not isinstance(domain, list):
             domain = [domain]
         for d in domain:
-            metadata_path = f"/data/shinpaul14/projects/MM-SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
+            metadata_path = f"/data/jongmin/projects/SADA_Domain_Adaptation_Splits/{d.upper()}_{self.split}.pkl"
             self.metadata_paths.append(metadata_path)
 
         if osp.exists('/local_datasets/EPIC_KITCHENS_UDA'):

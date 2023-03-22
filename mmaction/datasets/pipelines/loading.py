@@ -215,7 +215,7 @@ class SampleFrames:
 
        
         frame_inds = np.concatenate(frame_inds_)
-        #print('frame_inds', frame_inds)
+        # print('frame_inds', frame_inds)
        
 
         if self.temporal_jitter:

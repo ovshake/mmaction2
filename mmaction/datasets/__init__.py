@@ -20,12 +20,13 @@ from .video_dataset import VideoDataset
 from .epickitchens_mmsada import EpicKitchensMMSADA, EpicKitchensSlowFastMMSADA, EpicKitchensTemporalSpatialMMSADA, EpicKitchensMultipleContrastiveSpaces,EpicKitchensTemporalSpatialMMSADA_not_same_start, EpicKitchensTemporalSpatialMMSADA_val_temp, EpicKitchensTemporalSpatialMMSADA_ensemble
 from .k400_ucf_hmdb import Kinetics400UCFHMDB, Kinetics400UCFHMDBTwoPathway, Kinetics400UCFHMDBMultipleContrastiveSpaces
 from .multicontrastive_datasets import EpicKitchensMultiContrastiveNonBinaryAugSpaces
+from .UCF_HMDB import HMDB_2_UCF
 from .golfdb import GolfDB
 __all__ = [
     'VideoDataset', 'build_dataloader', 'build_dataset', 'RepeatDataset',
     'RawframeDataset', 'BaseDataset', 'ActivityNetDataset', 'SSNDataset',
     'HVUDataset', 'AudioDataset', 'AudioFeatureDataset', 'ImageDataset',
-    'RawVideoDataset', 'AVADataset', 'AudioVisualDataset',
+    'RawVideoDataset', 'AVADataset', 'AudioVisualDataset','HMDB_2_UCF',
     'BaseMiniBatchBlending', 'CutmixBlending', 'MixupBlending', 'DATASETS',
     'PIPELINES', 'BLENDINGS', 'PoseDataset', 'ConcatDataset', 'EpicKitchensMMSADA', 'EpicKitchensSlowFastMMSADA',
     'EpicKitchensTemporalSpatialMMSADA', 'Kinetics400UCFHMDB', 'Kinetics400UCFHMDBTwoPathway',

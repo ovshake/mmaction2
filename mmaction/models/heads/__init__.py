@@ -18,13 +18,13 @@ from .vcop_head import VCOPHead
 from .slowfast_contrastive_head import SlowFastContrastiveHead, TwoPathwayContrastiveHead, ContrastiveHead, AugSelfHead
 from .tsn_head import TSNHead
 from .x3d_head import X3DHead
-from .simsiam_head import projection_MLP, prediction_MLP, projection_MLP_bias_false, prediction_MLP_bias_false, projection_MLP_multi, prediction_MLP_multi, projection_MLP_no_BN
+from .simsiam_head import projection_MLP, prediction_MLP, projection_MLP_multi, prediction_MLP_multi, projection_MLP_avg
 
 __all__ = [
     'TSNHead', 'I3DHead', 'BaseHead', 'TSMHead', 'SlowFastHead', 'SSNHead',
     'TPNHead', 'AudioTSNHead', 'X3DHead', 'BBoxHeadAVA', 'AVARoIHead',
     'FBOHead', 'LFBInferHead', 'TRNHead', 'TimeSformerHead', 'ACRNHead',
     'STGCNHead', 'SelfSupervisedTSMHead', 'VCOPHead', 'SlowFastContrastiveHead', 
-    'TwoPathwayContrastiveHead', 'ContrastiveHead', 'AugSelfHead', 'projection_MLP', 'prediction_MLP',
+    'TwoPathwayContrastiveHead', 'ContrastiveHead', 'AugSelfHead', 'projection_MLP', 'prediction_MLP','projection_MLP_avg',
     'projection_MLP_bias_false', 'prediction_MLP_bias_false', 'projection_MLP_multi', 'prediction_MLP_multi','projection_MLP_no_BN'
 ]
