@@ -25,19 +25,16 @@ def write_log(log, log_path):
 
 
 def fix_python_seed(seed):
-    print('seed-----------python', seed)
     random.seed(seed)
     np.random.seed(seed)
 
 
 def fix_torch_seed(seed):
-    print('seed-----------torch', seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
 
 def fix_all_seed(seed):
-    print('seed-----------all device', seed)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -335,7 +332,7 @@ class AugNet(nn.Module):
             x_s4down = self.shift_var4 * self.norm(x_s4down) + self.shift_mean4
             x_s4 = torch.tanh(spatial_up4(x_s4down))
 
-     
+
 
             output = (weight[0] * x_c + weight[1] * x_s + weight[2] * x_s2+ weight[3] * x_s3 + weight[4]*x_s4) / weight.sum()
         else:
@@ -462,7 +459,7 @@ class L2DRecognizer2D(Recognizer2D):
                                       nn.ReLU())
         self.p_mu = nn.Sequential(nn.Linear(2048 , 2048),# paper it is 512
                                   nn.LeakyReLU())
-        
+
 
     def forward(self, imgs, label=None, return_loss=True, **kwargs):
         """Define the computation performed at every call."""
@@ -486,18 +483,14 @@ class L2DRecognizer2D(Recognizer2D):
         losses = dict()
         tran = transforms.Normalize([0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         data = imgs_pathway_A
-        
+
         class_l = labels
         batches = data.shape[0] # 12
-        num_segs = data.shape[0] // batches # 8 
+        num_segs = data.shape[0] // batches # 8
         # before reshape -  torch.Size([12, 8, 3, 224, 224])
-        print('before reshape - ', data.shape)
         data = data.reshape((-1, ) + data.shape[2:])
-        print('class_l- before squeeze - ', class_l.shape)
-        print('data - ', data.shape)
-   
+
         class_l = class_l.squeeze()
-        print('class_l  after squeeze - ', class_l.shape)
         # ^ torch.Size([12])
         class_l_for_loss = torch.cat([class_l, class_l])
         list_class_l = class_l.tolist()
@@ -507,17 +500,15 @@ class L2DRecognizer2D(Recognizer2D):
             for z in inflated:
                 all_frame_label.append(z)
         class_l = torch.tensor(all_frame_label)
-     
-        
+
+
 
         inputs_max = tran(torch.sigmoid(self.convertor(data)))
         inputs_max = inputs_max * 0.6 + data * 0.4
         data_aug = torch.cat([inputs_max, data])
-        print('data_aug - ', data_aug.shape)
 # before going in to the feature extractor -----------------
         labels = torch.cat([class_l, class_l])
-        print('labels - ', labels.shape)
-        
+
         # need to change our input size
         x_pathway_A = self.extract_feat(data_aug) # due to torch.cat x2  bigger than original
         # print('x_pathway_A - ', x_pathway_A.shape)
@@ -526,12 +517,14 @@ class L2DRecognizer2D(Recognizer2D):
         # torch.Size([192, 2048, 1, 1])
         x_pathway_A_feature = x_pathway_A.squeeze()
         # torch.Size([192, 2048])
-        
+        # print(x_pathway_A_feature)
+
         # this is the spot mu should be here
         logvar = self.p_logvar(x_pathway_A_feature.float())
         # torch.Size([192, 2048])
         #^^ logvar
         mu = self.p_mu(x_pathway_A_feature.float())
+        # print(' mu-----0-0-0-00',mu)
         # torch.Size([192, 2048])
         #^^ mu
         x_embedding = reparametrize(mu, logvar)
@@ -540,40 +533,34 @@ class L2DRecognizer2D(Recognizer2D):
         # print(x_pathway_A.shape)
         # logit = self.cls_head(x_pathway_A.float(), num_segs)
 
-        
+
         # print(x_embedding[:class_l.size(0)])
         # class_l.size(0) * num_segs
         emb_src = F.normalize(x_embedding[:class_l.size(0)]).unsqueeze(1)
         emb_aug = F.normalize(x_embedding[class_l.size(0):]).unsqueeze(1)
-        print('emb_src -------------- ', emb_src.shape)
-        print('emb_aug -------------- ', emb_aug.shape)
-        print('labels -------------- ', labels.shape)
-    
+
         q = torch.cat([emb_src, emb_aug], dim=1)
-        print('number of feature  -------------- ', q.shape)
         loss_self_supervised = self.sup_contrastive_loss (torch.cat([emb_src, emb_aug], dim=1), class_l)
 
         mu = mu[labels.size(0):]
-            # print(type(mu))
+
         logvar = logvar[labels.size(0):]
         y_samples = x_pathway_A[:labels.size(0)]
+
         likeli = -loglikeli(mu, logvar, y_samples)
 
-        #cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
-# cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs) -  torch.Size([12, 8])
-        # gt_labels = labels.squeeze()
-        # print(cls_score_pathway_A)
-        # print('-------------')
-        # print(self.cls_head)
         logit = self.cls_head(x_pathway_A.float(), num_segs)
-        print('logit - ', logit.shape)
-        #loss_cls = self.cls_head.loss(logit, labels, **kwargs) # class loss 
+        #loss_cls = self.cls_head.loss(logit, labels, **kwargs) # class loss
         criterion = nn.CrossEntropyLoss()
         loss_cls = criterion(logit, class_l_for_loss)
-        loss_cls_stage_1 = loss_cls + loss_self_supervised + likeli
+        loss_cls_stage_1 = loss_cls + loss_self_supervised# + likeli temp 
+        print('loss_cls---------', loss_cls)
+        print('loss_self_supervised --------', loss_self_supervised)
+        print('likeli --------', likeli)
+        print('loss_cls_stage_1 --------', loss_cls_stage_1)
+        print('stage1 -----------------^^^^^^^^^^')
         step_1_loss = {'step_1_loss': loss_cls_stage_1}
-        losses.update(step_1_loss) 
-        print('passed stage 1 ----------------')
+        losses.update(step_1_loss)
      #---------------------------------------STAGE1 END---------------------------------------
 
         inputs_max_stage_2 =tran(torch.sigmoid(self.convertor(data, estimation=True)))
@@ -583,11 +570,11 @@ class L2DRecognizer2D(Recognizer2D):
         x_pathway_A_stage_2 = self.extract_feat(data_aug_stage2)
         x_pathway_A_stage_2 = nn.AdaptiveAvgPool2d(1)(x_pathway_A_stage_2)
         x_pathway_A_stage_2 = x_pathway_A_stage_2.squeeze()
-        logvar_stage_2 = self.p_logvar(x_pathway_A_stage_2)#logvar
-        mu_stage_2 = self.p_mu(x_pathway_A_stage_2) #mu
+        logvar_stage_2 = self.p_logvar(x_pathway_A_stage_2.float())#logvar
+        mu_stage_2 = self.p_mu(x_pathway_A_stage_2.float()) #mu
         x_pathway_A_stage_2 = reparametrize(mu_stage_2, logvar_stage_2) #embedding
 
-        logit_stage_2 = self.cls_head(x_pathway_A_stage_2.float(), num_segs) #useless in stage 2
+        # logit_stage_2 = self.cls_head(x_pathway_A_stage_2.float(), num_segs) #useless in stage 2
 
         mu_stage_2 = mu_stage_2[class_l.size(0):]
             # print(type(mu))
@@ -600,13 +587,14 @@ class L2DRecognizer2D(Recognizer2D):
         e1 = e[:class_l.size(0)]
         e2 = e[class_l.size(0):]
         dist = conditional_mmd_rbf(e1, e2, class_l, num_class=num_segs)
-        
+  
         stage_2_loss = dist + 0.1 * div
-        step_2_loss = {'stage_2_loss': stage_2_loss}
-        losses.update(step_2_loss)
+        print('stage_2_loss-0-0-0-0-0-0', stage_2_loss)
+        step_2_loss_1 = {'stage_2_loss': stage_2_loss}
+        losses.update(step_2_loss_1)
         # step_1_loss = {'step_1_loss': loss_cls_stage_1}
         #if we update the cls loss the model falls in to the wrong place
-     
+
         #losses.update(loss_self_supervised)
         return losses
 
@@ -637,8 +625,6 @@ class L2DRecognizer2D(Recognizer2D):
                 DDP, it means the batch size on each GPU), which is used for
                 averaging the logs.
         """
-        print(data_batch.keys())
-        print(data_batch['imgs'].shape)
         imgs_slow = data_batch['imgs']
         label = data_batch['label']
 
@@ -654,7 +640,7 @@ class L2DRecognizer2D(Recognizer2D):
         outputs = dict(
             loss=loss,
             log_vars=log_vars,
-            num_samples=len(next(iter(data_batch[0].values()))))
+            num_samples=len(next(iter(data_batch.values()))))
 
         return outputs
 
@@ -691,8 +677,6 @@ class L2DRecognizer2D(Recognizer2D):
             avg_pool = nn.AdaptiveAvgPool2d(1)
             x = avg_pool(x)
             # squeeze dimensions
-            print(x.shape)
-            print('---------')
             x = x.reshape((batches, num_segs, -1))
             # temporal average pooling
             x = x.mean(axis=1)

@@ -64,8 +64,9 @@ class TSMOptimizerConstructor(DefaultOptimizerConstructor):
                         bn.append(param)
             elif len(m._modules) == 0:
                 if len(list(m.parameters())) > 0:
-                    raise ValueError(f'New atomic module type: {type(m)}. '
-                                     'Need to give it a learning policy')
+                    pass
+                    # raise ValueError(f'New atomic module type: {type(m)}. '
+                    #                  'Need to give it a learning policy')
 
         # pop the cls_head fc layer params
         last_fc_weight = normal_weight.pop()
@@ -168,8 +169,9 @@ class TSMContrastiveHeadOptimizerConstructor(DefaultOptimizerConstructor):
                         bn.append(param)
             elif len(m._modules) == 0:
                 if len(list(m.parameters())) > 0:
-                    raise ValueError(f'New atomic module type: {type(m)}. '
-                                     'Need to give it a learning policy')
+                    pass
+                    # raise ValueError(f'New atomic module type: {type(m)}. '
+                    #                  'Need to give it a learning policy')
 
         # pop the cls_head fc layer params
         last_fc_weight = normal_weight.pop()
@@ -258,9 +260,10 @@ class TSMFreezeFCLayerOptimizerConstructor(DefaultOptimizerConstructor):
                     if param.requires_grad:
                         bn.append(param)
             elif len(m._modules) == 0:
-                if len(list(m.parameters())) > 0:
-                    raise ValueError(f'New atomic module type: {type(m)}. '
-                                     'Need to give it a learning policy')
+                pass
+                # if len(list(m.parameters())) > 0:
+                #     raise ValueError(f'New atomic module type: {type(m)}. '
+                #                      'Need to give it a learning policy')
 
         # pop the cls_head fc layer params
         last_fc_weight = normal_weight.pop()

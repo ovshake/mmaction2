@@ -2,7 +2,7 @@
 from .accuracy import (average_precision_at_temporal_iou,
                        average_recall_at_avg_proposals, confusion_matrix,
                        get_weighted_score, interpolated_precision_recall,
-                       mean_average_precision, mean_class_accuracy,
+                       mean_average_precision, mean_class_accuracy,top_k_accuracy_all_in_one,
                        mmit_mean_average_precision, pairwise_temporal_iou,
                        softmax, top_k_accuracy, top_k_classes, ece_score)
 from .eval_detection import ActivityNetLocalization
@@ -14,5 +14,5 @@ __all__ = [
     'average_recall_at_avg_proposals', 'pairwise_temporal_iou',
     'average_precision_at_temporal_iou', 'ActivityNetLocalization', 'softmax',
     'interpolated_precision_recall', 'mmit_mean_average_precision',
-    'top_k_classes', 'ece_score'
+    'top_k_classes', 'ece_score','top_k_accuracy_all_in_one'
 ]

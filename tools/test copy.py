@@ -27,7 +27,7 @@ except (ImportError, ModuleNotFoundError):
         'deprecated. Please install mmcv through master branch.')
     from mmaction.apis import multi_gpu_test, single_gpu_test
 
-#/data/jongmin/projects/mmaction2_paul_work/work_dirs/$exp_section/$exp_name/train_D1_test_D1/best_top1_acc_epoch_60.pth
+#/data/shinpaul14/projects/mmaction2/work_dirs/$exp_section/$exp_name/train_D1_test_D1/best_top1_acc_epoch_60.pth
 def parse_args():
     parser = argparse.ArgumentParser(
         description='MMAction2 test (and eval) a model')

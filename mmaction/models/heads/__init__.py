@@ -25,6 +25,6 @@ __all__ = [
     'TPNHead', 'AudioTSNHead', 'X3DHead', 'BBoxHeadAVA', 'AVARoIHead',
     'FBOHead', 'LFBInferHead', 'TRNHead', 'TimeSformerHead', 'ACRNHead',
     'STGCNHead', 'SelfSupervisedTSMHead', 'VCOPHead', 'SlowFastContrastiveHead', 
-    'TwoPathwayContrastiveHead', 'ContrastiveHead', 'AugSelfHead', 'projection_MLP', 'prediction_MLP','projection_MLP_avg',
+    'TwoPathwayContrastiveHead', 'ContrastiveHead', 'AugSelfHead', 'projection_MLP', 'prediction_MLP',
     'projection_MLP_bias_false', 'prediction_MLP_bias_false', 'projection_MLP_multi', 'prediction_MLP_multi','projection_MLP_no_BN'
 ]

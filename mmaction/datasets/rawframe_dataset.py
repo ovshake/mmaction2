@@ -4,6 +4,7 @@ import os.path as osp
 
 import torch
 
+from mmaction.datasets.pipelines import Resize
 from .base import BaseDataset
 from .builder import DATASETS
 
@@ -99,10 +100,10 @@ class RawframeDataset(BaseDataset):
                  modality='RGB',
                  sample_by_class=False,
                  power=0.,
-                 dynamic_length=False):
+                 dynamic_length=False,
+                 domain=None):
         self.filename_tmpl = filename_tmpl
-        #self.with_offset = with_offset
-        self.with_offset = False
+        self.with_offset = with_offset
         super().__init__(
             ann_file,
             pipeline,
@@ -115,6 +116,9 @@ class RawframeDataset(BaseDataset):
             sample_by_class=sample_by_class,
             power=power,
             dynamic_length=dynamic_length)
+        self.short_cycle_factors = kwargs.get('short_cycle_factors',
+                                              [0.5, 0.7071])
+        self.default_s = kwargs.get('default_s', (224, 224))
 
     def load_annotations(self):
         """Load annotation file to get video information."""
@@ -136,7 +140,6 @@ class RawframeDataset(BaseDataset):
                     video_info['frame_dir'] = frame_dir
                     idx += 1
                     if self.with_offset:
-                        print('running this !!!!!!!!!!!!!!!')
                         # idx for offset and total_frames
                         video_info['offset'] = int(line_split[idx])
                         video_info['total_frames'] = int(line_split[idx + 1])
@@ -154,25 +157,48 @@ class RawframeDataset(BaseDataset):
                     else:
                         assert len(label) == 1
                         video_info['label'] = label[0]
-                    # print(  "video_info['offset']",video_info['offset'] )
+                
                     video_infos.append(video_info)
-        # print(video_infos)
+        fin.close()
         return video_infos
 
     def prepare_train_frames(self, idx):
         """Prepare the frames for training given the index."""
-        results = copy.deepcopy(self.video_infos[idx])
-        results['filename_tmpl'] = self.filename_tmpl
-        results['modality'] = self.modality
-        results['start_index'] = self.start_index
 
-        # prepare tensor in getitem
-        if self.multi_class:
-            onehot = torch.zeros(self.num_classes)
-            onehot[results['label']] = 1.
-            results['label'] = onehot
+        def pipeline_for_a_sample(idx):
+            results = copy.deepcopy(self.video_infos[idx])
+            results['filename_tmpl'] = self.filename_tmpl
+            results['modality'] = self.modality
+            results['start_index'] = self.start_index
 
-        return self.pipeline(results)
+            # prepare tensor in getitem
+            if self.multi_class:
+                onehot = torch.zeros(self.num_classes)
+                onehot[results['label']] = 1.
+                results['label'] = onehot
+
+            return self.pipeline(results)
+
+        if isinstance(idx, tuple):
+            index, short_cycle_idx = idx
+            last_resize = None
+            for trans in self.pipeline.transforms:
+                if isinstance(trans, Resize):
+                    last_resize = trans
+            origin_scale = self.default_s
+            long_cycle_scale = last_resize.scale
+
+            if short_cycle_idx in [0, 1]:
+                # 0 and 1 is hard-coded as PySlowFast
+                scale_ratio = self.short_cycle_factors[short_cycle_idx]
+                target_scale = tuple(
+                    [int(round(scale_ratio * s)) for s in origin_scale])
+                last_resize.scale = target_scale
+            res = pipeline_for_a_sample(index)
+            last_resize.scale = long_cycle_scale
+            return res
+        else:
+            return pipeline_for_a_sample(idx)
 
     def prepare_test_frames(self, idx):
         """Prepare the frames for testing given the index."""

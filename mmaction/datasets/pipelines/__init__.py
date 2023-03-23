@@ -1,13 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .augmentations import (AudioAmplify, CenterCrop, ColorJitter, Flip, Fuse,
-                            Imgaug, MelSpectrogram, MultiGroupCrop,
+                            Imgaug, MelSpectrogram, 
                             MultiScaleCrop, Normalize, PytorchVideoTrans,
                             RandomCrop, RandomRescale, RandomResizedCrop,
-                            RandomScale, Resize, TenCrop, ThreeCrop,
+                            Resize, TenCrop, ThreeCrop,
                             TorchvisionTrans, RandomSampleColorJitter, 
-                            AugSelfColorJitter, ColorJitter_video)
+                            AugSelfColorJitter, ColorJitter_video,)
 from .compose import Compose
-from .formating import (Collect, FormatAudioShape, FormatGCNInput, FormatShape,
+from .formatting import (Collect, FormatAudioShape, FormatGCNInput, FormatShape,
                         ImageToTensor, Rename, ToDataContainer, ToTensor,
                         Transpose)
 from .loading import (AudioDecode, AudioDecodeInit, AudioFeatureSelector,

@@ -16,7 +16,7 @@ import itertools
 
 
 
-
+#changed all the fc layer bias to false after checking put them back 
 
 @HEADS.register_module()
 class projection_MLP(nn.Module):
@@ -38,7 +38,8 @@ class projection_MLP(nn.Module):
         self.BN2 = nn.BatchNorm1d(img_dim)
         self.relu_2 = nn.ReLU(inplace=True)
         self.fc3 = nn.Linear(middle_layer_dim, img_dim, bias=True)
-        self.BN3 = nn.BatchNorm1d(img_dim, affine=False)
+        #self.BN3 = nn.BatchNorm1d(img_dim, affine=False)
+        self.BN3 = nn.BatchNorm1d(img_dim)
 
         self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2, self.BN2, self.relu_2, self.fc3,self.BN3)
 

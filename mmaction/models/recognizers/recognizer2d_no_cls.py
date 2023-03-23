@@ -60,7 +60,7 @@ class Recognizer2D_no_cls(BaseRecognizer):
         # q = 1
         # if q==1:
         #     ss = x[0][0].detach().cpu().numpy()
-        #     numpy.savetxt( '/data/jongmin/projects/mmaction2_paul_work/speed.txt', ss)
+        #     numpy.savetxt( '/data/shinpaul14/projects/mmaction2/speed.txt', ss)
         #     q+=1
    
         x = nn.AdaptiveAvgPool2d(1)(x)

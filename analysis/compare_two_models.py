@@ -215,7 +215,7 @@ def pair_videos_with_gradcam(write_dir):
 
 if __name__ == '__main__':
     args = parse_args() 
-    test_domain_pickle_file_path = f"/data/jongmin/projects/dataset/{args.test_domain}_test.csv"
+    test_domain_pickle_file_path = f"/data/adithya/data/{args.test_domain}_test.csv"
     test_labels = load_annotations(test_domain_pickle_file_path) 
     verbclass_2_verb_mapping = get_verbclass_to_verb_mapping(test_labels)
 

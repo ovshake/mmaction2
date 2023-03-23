@@ -40,7 +40,7 @@ bash download_videos.sh
 
 This part is **optional** if you only want to use the video loader.
 
-Before extracting, please refer to [install.md](/docs/install.md) for installing [denseflow](https://github.com/open-mmlab/denseflow).
+Before extracting, please refer to [install.md](/docs/en/install.md) for installing [denseflow](https://github.com/open-mmlab/denseflow).
 
 If you have plenty of SSD space, then we recommend extracting frames there for better I/O performance.
 
@@ -74,8 +74,6 @@ bash extract_frames.sh tvl1
 ```
 
 ## Step 4. Fetch File List
-
-Note: These files are not available temporarily, we will update the download link soon.
 
 This part is **optional** if you do not use SSN model.
 
@@ -141,4 +139,4 @@ mmaction2
 │   │   │   |   ├── video_test_0000001
 ```
 
-For training and evaluating on THUMOS'14, please refer to [getting_started.md](/docs/getting_started.md).
+For training and evaluating on THUMOS'14, please refer to [getting_started.md](/docs/en/getting_started.md).

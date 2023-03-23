@@ -592,7 +592,7 @@ We incorporate modular design into our config system, which is convenient to con
     ]
 
     data = dict(  # Config of data
-        videos_per_gpu=16,  # Batch size of each single GPU
+        videos_per_gpu=12,  # Batch size of each single GPU
         workers_per_gpu=2,  # Workers to pre-fetch data for each single GPU
         val_dataloader=dict(   # Additional config of validation dataloader
             videos_per_gpu=1),  # Batch size of each single GPU during evaluation

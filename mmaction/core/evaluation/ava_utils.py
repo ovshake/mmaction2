@@ -1,4 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+# This piece of code is directly adapted from ActivityNet official repo
+# https://github.com/activitynet/ActivityNet/blob/master/
+# Evaluation/get_ava_performance.py. Some unused codes are removed.
 import csv
 import logging
 import time
@@ -70,9 +73,9 @@ def read_csv(csv_file, class_whitelist=None):
         boxes: A dictionary mapping each unique image key (string) to a list of
         boxes, given as coordinates [y1, x1, y2, x2].
         labels: A dictionary mapping each unique image key (string) to a list
-        of integer class lables, matching the corresponding box in `boxes`.
+        of integer class labels, matching the corresponding box in `boxes`.
         scores: A dictionary mapping each unique image key (string) to a list
-        of score values lables, matching the corresponding label in `labels`.
+        of score values labels, matching the corresponding label in `labels`.
         If scores are not provided in the csv, then they will default to 1.0.
     """
     start = time.time()
@@ -121,7 +124,7 @@ def read_exclusions(exclusions_file):
     if exclusions_file:
         reader = csv.reader(exclusions_file)
     for row in reader:
-        assert len(row) == 2, 'Expected only 2 columns, got: ' + row
+        assert len(row) == 2, f'Expected only 2 columns, got: {row}'
         excluded.add(make_image_key(row[0], row[1]))
     return excluded
 

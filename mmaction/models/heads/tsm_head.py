@@ -64,7 +64,7 @@ class TSMHead(BaseHead):
         else:
             self.dropout = None
         self.fc_cls = nn.Linear(self.in_channels, self.num_classes)
-
+        # print('self.in_channels - ', self.in_channels)
         if self.spatial_type == 'avg':
             # use `nn.AdaptiveAvgPool2d` to adaptively match the in_channels.
             self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -104,13 +104,14 @@ class TSMHead(BaseHead):
             x = self.dropout(x)
         # [N * num_segs, num_classes]
         cls_score = self.fc_cls(x)
-
+        # print('cls_score', cls_score.shape)
         if self.is_shift and self.temporal_pool:
             # [2 * N, num_segs // 2, num_classes]
             cls_score = cls_score.view((-1, self.num_segments // 2) +
                                        cls_score.size()[1:])
         else:
             # [N, num_segs, num_classes]
+            # print('self.num_segments -  ',self.num_segments )
             cls_score = cls_score.view((-1, self.num_segments) +
                                        cls_score.size()[1:])
         # [N, 1, num_classes]
@@ -181,7 +182,7 @@ class TSMHead_norm(BaseHead):
         else:
             self.dropout = None
         self.fc_cls = nn.Linear(self.in_channels, self.num_classes)
-
+        print('self.in_channels - ',self.in_channels)
         if self.spatial_type == 'avg':
             # use `nn.AdaptiveAvgPool2d` to adaptively match the in_channels.
             self.avg_pool = nn.AdaptiveAvgPool2d(1)

@@ -1,8 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmaction.utils import import_module_error_class
-
 try:
     from mmdet.core.bbox import AssignResult, MaxIoUAssigner
     from mmdet.core.bbox.builder import BBOX_ASSIGNERS
@@ -34,7 +32,7 @@ if mmdet_imported:
                 same highest overlap with some gt to that gt. Default: True.
         """
 
-        # The function is overriden, to handle the case that gt_label is not
+        # The function is overridden, to handle the case that gt_label is not
         # int
         def assign_wrt_overlaps(self, overlaps, gt_labels=None):
             """Assign w.r.t. the overlaps of bboxes with gts.
@@ -95,7 +93,7 @@ if mmdet_imported:
             assigned_gt_inds[pos_inds] = argmax_overlaps[pos_inds] + 1
 
             if self.match_low_quality:
-                # Low-quality matching will overwirte the assigned_gt_inds
+                # Low-quality matching will overwrite the assigned_gt_inds
                 # assigned in Step 3. Thus, the assigned gt might not be the
                 # best one for prediction.
                 # For example, if bbox A has 0.9 and 0.8 iou with GT bbox
@@ -134,6 +132,11 @@ if mmdet_imported:
 
 else:
     # define an empty class, so that can be imported
-    @import_module_error_class('mmdet')
     class MaxIoUAssignerAVA:
-        pass
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                'Failed to import `AssignResult`, `MaxIoUAssigner` from '
+                '`mmdet.core.bbox` or failed to import `BBOX_ASSIGNERS` from '
+                '`mmdet.core.bbox.builder`. The class `MaxIoUAssignerAVA` is '
+                'invalid. ')

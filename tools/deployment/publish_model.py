@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os
+import platform
 import subprocess
 
 import torch
@@ -23,13 +25,18 @@ def process_checkpoint(in_file, out_file):
     # add the code here.
     print('this is used ')
     torch.save(checkpoint, out_file)
-    sha = subprocess.check_output(['sha256sum', out_file]).decode()
+    if platform.system() == 'Windows':
+        sha = subprocess.check_output(
+            ['certutil', '-hashfile', out_file, 'SHA256'])
+        sha = str(sha).split('\\r\\n')[1]
+    else:
+        sha = subprocess.check_output(['sha256sum', out_file]).decode()
     if out_file.endswith('.pth'):
         out_file_name = out_file[:-4]
     else:
         out_file_name = out_file
     final_file = out_file_name + f'-{sha[:8]}.pth'
-    subprocess.Popen(['mv', out_file, final_file])
+    os.rename(out_file, final_file)
 
 
 def main():

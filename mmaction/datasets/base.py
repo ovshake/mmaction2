@@ -12,7 +12,7 @@ from mmcv.utils import print_log
 from torch.utils.data import Dataset
 
 from ..core import (mean_average_precision, mean_class_accuracy,
-                    mmit_mean_average_precision, top_k_accuracy,
+                    mmit_mean_average_precision, top_k_accuracy,top_k_accuracy_all_in_one,
                     confusion_matrix, ece_score)
 from .pipelines import Compose
 
@@ -181,7 +181,8 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         metrics = metrics if isinstance(metrics, (list, tuple)) else [metrics]
         allowed_metrics = [
             'top_k_accuracy', 'mean_class_accuracy', 'mean_average_precision',
-            'mmit_mean_average_precision', 'confusion_matrix', 'ece_score',
+            'mmit_mean_average_precision', 'confusion_matrix', 'ece_score','top_k_accuracy_all_in_one',
+            'top_k_classes',
         ]
 
         for metric in metrics:
@@ -215,6 +216,26 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 log_msg = ''.join(log_msg)
                 print_log(log_msg, logger=logger)
                 continue
+            
+            if metric == 'top_k_accuracy_all_in_one':
+               
+                topk = metric_options.setdefault('top_k_accuracy_all_in_one',
+                                                 {}).setdefault(
+                                                     'topk', (1, 5))
+                if not isinstance(topk, (int, tuple)):
+                    raise TypeError('topk must be int or tuple of int, '
+                                    f'but got {type(topk)}')
+                if isinstance(topk, int):
+                    topk = (topk, )
+
+                top_k_acc = top_k_accuracy_all_in_one(results, gt_labels ,topk )
+                log_msg = []
+                for k, acc in zip(topk, top_k_acc):
+                    eval_results[f'top{k}_acc'] = acc
+                    log_msg.append(f'\ntop{k}_acc\t{acc:.4f}')
+                log_msg = ''.join(log_msg)
+                print_log(log_msg, logger=logger)
+                continue
 
             if metric == 'mean_class_accuracy':
                 mean_acc = mean_class_accuracy(results, gt_labels)
@@ -222,6 +243,9 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 log_msg = f'\nmean_acc\t{mean_acc:.4f}'
                 print_log(log_msg, logger=logger)
                 continue
+                
+            # if metric == 'top_k_classes':
+
 
             if metric in [
                     'mean_average_precision', 'mmit_mean_average_precision'

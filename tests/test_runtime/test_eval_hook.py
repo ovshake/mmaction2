@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 
 # TODO import eval hooks from mmcv and delete them from mmaction2
 try:
-    from mmcv.runner import EvalHook, DistEvalHook
+    from mmcv.runner import DistEvalHook, EvalHook
     pytest.skip(
         'EvalHook and DistEvalHook are supported in MMCV',
         allow_module_level=True)
@@ -211,7 +211,7 @@ def test_eval_hook():
         assert osp.exists(ckpt_path)
         assert runner.meta['hook_msgs']['best_score'] == -3
 
-    # Test the EvalHook when resume happend
+    # Test the EvalHook when resume happened
     data_loader = DataLoader(EvalDataset())
     eval_hook = EvalHook(data_loader, save_best='acc')
     with tempfile.TemporaryDirectory() as tmpdir:

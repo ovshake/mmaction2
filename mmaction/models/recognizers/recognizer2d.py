@@ -23,7 +23,7 @@ class Recognizer2D(BaseRecognizer):
         losses = dict()
 
         x = self.extract_feat(imgs)
-
+        print('out put shape x ', x.shape)
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
                 # apply adaptive avg pooling
@@ -41,7 +41,7 @@ class Recognizer2D(BaseRecognizer):
             x = x.squeeze(2)
             num_segs = 1
             losses.update(loss_aux)
-
+        # print('out put shape x ', x.shape)
         cls_score = self.cls_head(x.float(), num_segs)
         gt_labels = labels.squeeze()
         loss_cls = self.cls_head.loss(cls_score, gt_labels, **kwargs)
@@ -60,7 +60,7 @@ class Recognizer2D(BaseRecognizer):
         # q = 1
         # if q==1:
         #     ss = x[0][0].detach().cpu().numpy()
-        #     numpy.savetxt( '/data/jongmin/projects/mmaction2_paul_work/speed.txt', ss)
+        #     numpy.savetxt( '/data/shinpaul14/projects/mmaction2/speed.txt', ss)
         #     q+=1
    
         x = nn.AdaptiveAvgPool2d(1)(x)
@@ -98,7 +98,7 @@ class Recognizer2D(BaseRecognizer):
         # `num_crops` is calculated by:
         #   1) `twice_sample` in `SampleFrames`
         #   2) `num_sample_positions` in `DenseSampleFrames`
-        #   3) `ThreeCrop/TenCrop/MultiGroupCrop` in `test_pipeline`
+        #   3) `ThreeCrop/TenCrop` in `test_pipeline`
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
 
         # should have cls_head if not extracting features
@@ -137,7 +137,7 @@ class Recognizer2D(BaseRecognizer):
         # `num_crops` is calculated by:
         #   1) `twice_sample` in `SampleFrames`
         #   2) `num_sample_positions` in `DenseSampleFrames`
-        #   3) `ThreeCrop/TenCrop/MultiGroupCrop` in `test_pipeline`
+        #   3) `ThreeCrop/TenCrop` in `test_pipeline`
         #   4) `num_clips` in `SampleFrames` or its subclass if `clip_len != 1`
         cls_score = self.cls_head(x, fcn_test=True)
 
@@ -804,7 +804,7 @@ class VCOPSRecognizer2D_cls_no(Recognizer2D):
         x = self.extract_feat(imgs)
         x = nn.AdaptiveAvgPool2d(1)(x)
         x = x.squeeze()
-        x = F.normalize(x, dim=1, eps=1e-8)
+        # x = F.normalize(x, dim=1, eps=1e-8)
 
         if emb_stage == 'backbone':
             return x

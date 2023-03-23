@@ -44,7 +44,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['audios'])
 ]
 data = dict(
-    videos_per_gpu=160,
+    videos_per_gpu=120,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,

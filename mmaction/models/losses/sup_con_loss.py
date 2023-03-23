@@ -13,21 +13,22 @@ from torch.nn.functional import normalize
 @LOSSES.register_module()
 class symmetric_supervisedContrastiveLoss(BaseWeightedLoss):
 
-    def __init__(self, num_classes, temperature=.3, loss_weight=1., normalize_feature=False, **kwargs):
+    def __init__(self, temperature=.3, loss_weight=1.,type_loss='contrastive', **kwargs):
         super().__init__(loss_weight)
-        self.num_classes = num_classes
+    
+        self.type_loss=type_loss
         self.temperature = temperature
-        self.normalize_feature=normalize_feature
+     
         self.loss = SupConLoss(self.temperature, base_temperature=self.temperature)
       
 
 
     def _forward(self, q1, k1, q2, k2, label, **kwargs):
-        if self.normalize_feature:
-            q1 = normalize(q1, dim=1)
-            k1 = normalize(k1, dim=1)
-            q2 = normalize(q2, dim=1)
-            k2 = normalize(k2, dim=1)
+  
+        q1 = normalize(q1, dim=1)
+        k1 = normalize(k1, dim=1)
+        q2 = normalize(q2, dim=1)
+        k2 = normalize(k2, dim=1)
         # features_a  is 96,2048 or N*batch, 2048
         # features_b is 96,2048 or N*batch, 2048
         q1 = q1.unsqueeze(1)
@@ -50,36 +51,51 @@ class symmetric_supervisedContrastiveLoss(BaseWeightedLoss):
         loss = (loss_1 + loss_2)*0.5
 
         if not self.name:
-            ret_dict = {'symmetric_contrastive_loss': loss}
+            if self.type_loss=='contrastive':
+                ret_dict = {'symmetric_contrastive_loss': loss}
+            else:
+                ret_dict = {'symmetric_supCon_loss': loss}
         else:
-            ret_dict = {f'{self.name}_symmetric_contrastive_loss': loss}
+            if self.type_loss=='contrastive':
+                ret_dict = {f'{self.name}_symmetric_contrastive_loss': loss}
+            else:
+                ret_dict = {f'{self.name}_symmetric_supCon_loss': loss}
         return ret_dict
 
 #--------------- Asymmetric loss ------------------#
 @LOSSES.register_module()
 class supervisedContrastiveLoss(BaseWeightedLoss):
 
-    def __init__(self, num_classes, temperature=.3, loss_weight=1., normalize_feature=False, **kwargs):
+    def __init__(self, temperature=.3, loss_weight=1.,name='color',type_loss=None, **kwargs):
         super().__init__(loss_weight)
-        self.num_classes = num_classes
+       
         self.temperature = temperature
-        self.normalize_feature=normalize_feature
-        self.loss = SupConLoss(self.temperature, base_temperature=self.temperature)
+        self.type_loss=type_loss
+        self.loss = SupConLoss(self.temperature)
+        self.name=name
       
 
 
-    def _forward(self, features_a, features_b, label, **kwargs):
-        if self.normalize_feature:
-            features_a = normalize(features_a, dim=1)
-            features_b = normalize(features_b, dim=1)
+    def _forward(self, features_a, features_b, label='contrastive', **kwargs):
+
+        features_a = normalize(features_a, dim=1)
+        features_b = normalize(features_b, dim=1)
+
         # features_a  is 96,2048 or N*batch, 2048
         # features_b is 96,2048 or N*batch, 2048
+        # B = features_a.shape[0] // 4
+        # features_a, features_b = features_a[:2*B:2], features_b[1:2*B:2]
+    
+      
         features_a = features_a.unsqueeze(1)
-        # this code will make the features_a to be 96,1,2048
+        # print('features_a shape - ', features_a.shape)
+        # # this code will make the features_a to be 96,1,2048
         features_b = features_b.unsqueeze(1)
-        # this code will make the features_b to be 96,1,2048
+        # # this code will make the features_b to be 96,1,2048
 
         input_feature = torch.cat((features_a, features_b), dim=1)
+        # print('input_feature shape - ', input_feature.shape)
+        # print('input_feature - ', input_feature.shape)
         # this code will make the input_feature to be 96,2,2048
 
         '''feature_a is the  feature from the no stop grad pathway
@@ -87,16 +103,26 @@ class supervisedContrastiveLoss(BaseWeightedLoss):
         #need to reshape features_a and features_b to be [bsz, n_views, ...]
         # for supcon the label will be available
         # but for contrastive learning the label will not be available
+        # print(input_feature)
+        # print('label - ', label)
+        # if torch.isnan(input_feature).any():
+        #     print("The tensor contains NaN values.")
         loss = self.loss(input_feature, label)
-
+        # print('loss - ',loss)
         if not self.name:
-            ret_dict = {'contrastive_loss': loss}
+            if self.type_loss=='contrastive':
+                ret_dict = {'contrastive_loss': loss}
+            else:
+                ret_dict = {'supCon_loss': loss}
         else:
-            ret_dict = {f'{self.name}_contrastive_loss': loss}
+            if self.type_loss=='contrastive':
+                ret_dict = {f'{self.name}_contrastive_loss': loss}
+            else:
+                ret_dict = {f'{self.name}_supCon_loss': loss}
         return ret_dict
 
 
-class SupConLoss(torch.nn.Module):
+class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
     def __init__(self, temperature=0.07, contrast_mode='all'):
@@ -117,11 +143,8 @@ class SupConLoss(torch.nn.Module):
         Returns:
             A loss scalar.
         """
-        #changedc this part 
-        # device = (torch.device('cuda')
-        #           if features.is_cuda
-        #           else torch.device('cpu'))
-        device = torch.device('cuda')
+        device = (torch.device('cuda'))
+
         if len(features.shape) < 3:
             raise ValueError('`features` needs to be [bsz, n_views, ...],'
                              'at least 3 dimensions are required')
@@ -143,6 +166,7 @@ class SupConLoss(torch.nn.Module):
 
         contrast_count = features.shape[1]
         contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
+        # print('contrast_feature', contrast_feature.shape)
         if self.contrast_mode == 'one':
             anchor_feature = features[:, 0]
             anchor_count = 1
@@ -156,10 +180,13 @@ class SupConLoss(torch.nn.Module):
         anchor_dot_contrast = torch.div(
             torch.matmul(anchor_feature, contrast_feature.T),
             self.temperature)
+        # print('anchor_dot_contrast', anchor_dot_contrast)
+        # print('anchor_dot_contrast shape', anchor_dot_contrast.shape)
         # for numerical stability
         logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
         logits = anchor_dot_contrast - logits_max.detach()
-
+        # print('logits_max', logits_max.shape)
+        # print('logits shape', logits.shape)
         # tile mask
         mask = mask.repeat(anchor_count, contrast_count)
         # mask-out self-contrast cases
@@ -174,12 +201,19 @@ class SupConLoss(torch.nn.Module):
         # compute log_prob
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
+        # print("exp_logits: ", exp_logits)  
+        # print("exp_logits.sum(1, keepdim=True): ", exp_logits.sum(1, keepdim=True))
 
+        # print('mask * log_prob', mask * log_prob)
         # compute mean of log-likelihood over positive
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
-
+        # (mask * log_prob).sum(1) = NAN
+        #mask.sum(1) no problem
+        #print('mask.sum(1)', mask.sum(1))
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
+        if torch.isnan(loss).any():
+            assert print("The tensor contains NaN values.")
 
         return loss

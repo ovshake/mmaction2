@@ -36,7 +36,7 @@ def get_average_of_last_three_val(json_log):
     return average_last_three
 
 if __name__ == '__main__':
-    run_folder_pattern = "/data/jongmin/projects/mmaction2_paul_work/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_cont_ablation/color-contrastive-single-instance-try-1-X-a-mean/**/**/*.log.json"
+    run_folder_pattern = "/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_cont_ablation/color-contrastive-single-instance-try-1-X-a-mean/**/**/*.log.json"
     folder_paths = glob.glob(run_folder_pattern, recursive=True)
     for path in folder_paths:
         run_name = path.split('/')[-2]

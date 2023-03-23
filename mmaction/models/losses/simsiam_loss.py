@@ -61,7 +61,7 @@ class Symmetric_ContrastiveLossv2_div(BaseWeightedLoss):
         cross_similarity_p1_z2 = cross_similarity_p1_z2 / self.temperature
         cross_similarity_p1_z2 = cross_similarity_p1_z2.exp()
         diag_elems_1 = torch.diagonal(cross_similarity_p1_z2, 0)
-        row_sum_cross_p1_z2 = cross_similarity_p1_z2.sum(0)  # Taking sum across row
+        row_sum_cross_p1_z2 = cross_similarity_p1_z2.sum(1)  # Taking sum across row
         row_sum_cross_p1_z2 = row_sum_cross_p1_z2 - diag_elems_1
 
         #cross sim p2 z1
@@ -69,7 +69,7 @@ class Symmetric_ContrastiveLossv2_div(BaseWeightedLoss):
         cross_similarity_p2_z1 = cross_similarity_p2_z1 / self.temperature
         cross_similarity_p2_z1 = cross_similarity_p2_z1.exp()
         diag_elems_2 = torch.diagonal(cross_similarity_p2_z1, 0)
-        row_sum_cross_p2_z1 = cross_similarity_p2_z1.sum(0)  # Taking sum across row
+        row_sum_cross_p2_z1 = cross_similarity_p2_z1.sum(1)  # Taking sum across row
         row_sum_cross_p2_z1 = row_sum_cross_p2_z1 - diag_elems_2
 
         row_sum_cross = row_sum_cross_p1_z2 + row_sum_cross_p2_z1 
@@ -179,7 +179,7 @@ class Symmetric_ContrastiveLossv2(BaseWeightedLoss):
         cross_similarity_p1_z2 = cross_similarity_p1_z2 / self.temperature
         cross_similarity_p1_z2 = cross_similarity_p1_z2.exp()
         diag_elems_1 = torch.diagonal(cross_similarity_p1_z2, 0)
-        row_sum_cross_p1_z2 = cross_similarity_p1_z2.sum(1)  # Taking sum across row
+        row_sum_cross_p1_z2 = cross_similarity_p1_z2.sum(0)  # Taking sum across row
         row_sum_cross_p1_z2 = row_sum_cross_p1_z2 - diag_elems_1
 
         #cross sim p2 z1
@@ -187,7 +187,7 @@ class Symmetric_ContrastiveLossv2(BaseWeightedLoss):
         cross_similarity_p2_z1 = cross_similarity_p2_z1 / self.temperature
         cross_similarity_p2_z1 = cross_similarity_p2_z1.exp()
         diag_elems_2 = torch.diagonal(cross_similarity_p2_z1, 0)
-        row_sum_cross_p2_z1 = cross_similarity_p2_z1.sum(1)  # Taking sum across row
+        row_sum_cross_p2_z1 = cross_similarity_p2_z1.sum(0)  # Taking sum across row
         row_sum_cross_p2_z1 = row_sum_cross_p2_z1 - diag_elems_2
 
         row_sum_cross = row_sum_cross_p1_z2 + row_sum_cross_p2_z1 
@@ -231,7 +231,7 @@ class Symmetric_ContrastiveLossv2(BaseWeightedLoss):
 
 
 
-        #diag_elems = diag_elems_1 + diag_elems_2
+        diag_elems = diag_elems_1 + diag_elems_2
         # We are taking
         denominator_1 = row_sum_cross_p1_z2
         denominator_2 = row_sum_cross_p2_z1
@@ -295,7 +295,7 @@ class Asymmetric_ContrastiveLossv2(BaseWeightedLoss):
         row_sum_cross = row_sum_cross / self.temperature
         row_sum_cross = row_sum_cross.exp()
         diag_elems = torch.diagonal(row_sum_cross, 0)
-        row_sum_cross = row_sum_cross.sum(0)  # Taking sum across row
+        row_sum_cross = row_sum_cross.sum(1)  # Taking sum across row
         row_sum_cross = row_sum_cross - diag_elems
 
     
@@ -306,25 +306,17 @@ class Asymmetric_ContrastiveLossv2(BaseWeightedLoss):
 
 
         if self.use_row_sum_a:
-
             a_similarity_p1 = self._calculate_cosine_similarity(p1, p1)
-      
-
-        # print(type(a_similarity))
-        # print(a_similarity)
             a_similarity_p1[mask] = 0.
             a_similarity_p1 = a_similarity_p1 / self.temperature
             a_similarity_p1 = a_similarity_p1.exp()
             row_sum_a = a_similarity_p1.sum(0)
-
-       
         if self.use_row_sum_b:
             b_similarity_z2 = self._calculate_cosine_similarity(z2, z2)
             b_similarity_z2[mask] = 0.
             b_similarity_z2 = b_similarity_z2 / self.temperature
             b_similarity_z2 = b_similarity_z2.exp()
             b_similarity_z2 = b_similarity_z2.sum(0)
-
             row_sum_b = b_similarity_z2
 
 
@@ -345,8 +337,9 @@ class Asymmetric_ContrastiveLossv2(BaseWeightedLoss):
         denominator += 1e-8
   
         #just like simsiam loss divide 2
-        loss = - torch.log(diag_elems / denominator).mean()
-        loss = loss * 2
+        loss_1 = - torch.log(diag_elems / denominator).mean()
+        loss_2 = - torch.log(diag_elems / denominator).mean()
+        loss = loss_1 + loss_2
         if not self.name:
             ret_dict = {'contrastive_loss': loss}
         else: 

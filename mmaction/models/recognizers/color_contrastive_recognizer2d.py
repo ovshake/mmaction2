@@ -9,6 +9,7 @@ from einops import rearrange
 from .recognizer2d import Recognizer2D
 from torch.nn.functional import normalize
 import torch.distributed as dist
+import clip
 
 def concat_all_gather(tensor, dim=0):
 	"""
@@ -648,7 +649,7 @@ class SimSiamRecognizer2D(Recognizer2D):
 
     def forward_train(self, imgs_pathway_A, imgs_pathway_B, labels, **kwargs):
         """Defines the computation performed at every call when training."""
-
+        
         assert self.with_cls_head
         batches = imgs_pathway_A.shape[0]
         imgs_pathway_A = imgs_pathway_A.reshape((-1, ) + imgs_pathway_A.shape[2:])
@@ -667,18 +668,21 @@ class SimSiamRecognizer2D(Recognizer2D):
 
         contrastive_pathway_A_features = self.projectionMLP(x_pathway_A.float())
         contrastive_pathway_B_features = self.projectionMLP(x_pathway_B.float())
-
+        print('contrastive_pathway_B_features - self.projectionMLP', contrastive_pathway_B_features.shape)
         cls_score_pathway_A = self.cls_head(x_pathway_A.float(), num_segs)
         gt_labels = labels.squeeze()
+      
+        print('gt_labels - ',gt_labels)
         # print(cls_score_pathway_A)
         # print('-------------')
         # print(self.cls_head)
         loss_cls = self.cls_head.loss(cls_score_pathway_A, gt_labels, **kwargs)
         predict_features_A_features = self.predictionMLP(contrastive_pathway_A_features)
+        print('predict_features_A_features - self.predictionMLP', predict_features_A_features.shape)
         #proj_features_A_features = self.color_to_vanilla_projection_layer(contrastive_pathway_A_features)
-
+  
         loss_self_supervised = self.color_contrastive_loss(predict_features_A_features,
-                                        contrastive_pathway_B_features.detach())
+                                        contrastive_pathway_B_features.detach(), gt_labels)
 
         #print(loss_cls)
         #if we update the cls loss the model falls in to the wrong place
@@ -687,11 +691,13 @@ class SimSiamRecognizer2D(Recognizer2D):
         return losses
 
     def forward_teacher(self, imgs, emb_stage):
+        # imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         batches = imgs.shape[0] # batchsize 
         imgs = imgs.reshape((-1, ) + imgs.shape[2:])
         x = self.extract_feat(imgs)
-        x = nn.AdaptiveAvgPool2d(1)(x).squeeze()
-        x = F.normalize(x, dim=1, eps=1e-8)
+        x = nn.AdaptiveAvgPool2d(1)(x)
+        x = x.squeeze()
+        # x = F.normalize(x, dim=1, eps=1e-8)
         # x = nn.AdaptiveAvgPool2d(1)(x)
         # x = x.squeeze()
         # if emb_stage == 'backbone':
@@ -785,7 +791,7 @@ class SimSiamRecognizer2D(Recognizer2D):
             avg_pool = nn.AdaptiveAvgPool2d(1)
             x = avg_pool(x)
             # squeeze dimensions
-            print(x.shape)
+            # print(x.shape)
             print('---------')
             x = x.reshape((batches, num_segs, -1))
             # temporal average pooling
@@ -1429,3 +1435,6 @@ class SimSiamRecognizerWithSimSiamLoss2D(Recognizer2D):
         cls_score = self.average_clip(cls_score,
                                       cls_score.size()[0] // batches)
         return cls_score
+
+
+

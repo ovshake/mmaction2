@@ -1,5 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
+from sklearn.metrics import  ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+import sys
 
 def confusion_matrix(y_pred, y_real, normalize=None):
     """Compute confusion matrix.
@@ -21,6 +24,8 @@ def confusion_matrix(y_pred, y_real, normalize=None):
 
     if isinstance(y_pred, list):
         y_pred = np.array(y_pred)
+        if y_pred.dtype == np.int32:
+            y_pred = y_pred.astype(np.int64)
     if not isinstance(y_pred, np.ndarray):
         raise TypeError(
             f'y_pred must be list or np.ndarray, but got {type(y_pred)}')
@@ -30,6 +35,8 @@ def confusion_matrix(y_pred, y_real, normalize=None):
 
     if isinstance(y_real, list):
         y_real = np.array(y_real)
+        if y_real.dtype == np.int32:
+            y_real = y_real.astype(np.int64)
     if not isinstance(y_real, np.ndarray):
         raise TypeError(
             f'y_real must be list or np.ndarray, but got {type(y_real)}')
@@ -77,7 +84,7 @@ def mean_class_accuracy(scores, labels):
     """
     pred = np.argmax(scores, axis=1)
     cf_mat = confusion_matrix(pred, labels).astype(float)
-
+    # print()
     cls_cnt = cf_mat.sum(axis=1)
     cls_hit = np.diag(cf_mat)
 
@@ -87,7 +94,7 @@ def mean_class_accuracy(scores, labels):
     return mean_class_acc
 
 
-def top_k_classes(scores, labels, k=10, mode='accurate'):
+def top_k_classes(scores, labels, k=8, mode='accurate'):
     """Calculate the most K accurate (inaccurate) classes.
 
     Given the prediction scores, ground truth label and top-k value,
@@ -107,8 +114,9 @@ def top_k_classes(scores, labels, k=10, mode='accurate'):
             acc_ratio).
     """
     assert mode in ['accurate', 'inaccurate']
-    pred = np.argmax(scores, axis=1)
-    cf_mat = confusion_matrix(pred, labels).astype(float)
+    pred = np.array(scores)
+    pred_labels = np.argmax(pred, axis=1)
+    cf_mat = confusion_matrix(pred_labels, labels).astype(float)
 
     cls_cnt = cf_mat.sum(axis=1)
     cls_hit = np.diag(cf_mat)
@@ -123,6 +131,15 @@ def top_k_classes(scores, labels, k=10, mode='accurate'):
         min_index = np.argsort(hit_ratio)[:k]
         min_value = hit_ratio[min_index]
         results = list(zip(min_index, min_value))
+    # cf_mat = confusion_matrix(pred_labels, labels,normalize='true' ).astype(float)
+    # # print(cf_mat)
+    # cf_disp = ConfusionMatrixDisplay(cf_mat, display_labels=range(0,8))
+    # print(type(cf_disp))
+    # cf_disp.plot()
+    # cf_disp.figure_.savefig('./confusion_matrix.png')
+  
+
+
     return results
 
 
@@ -137,6 +154,10 @@ def top_k_accuracy(scores, labels, topk=(1, )):
     Returns:
         list[float]: Top k accuracy score for each k.
     """
+    # pred = np.argmax(scores, axis=1)
+    # cf_mat = confusion_matrix(pred, labels,normalize='pred' ).astype(float)
+    # print(cf_mat)
+    # print(cf_mat.sum(1))
     res = []
     labels = np.array(labels)[:, np.newaxis]
     for k in topk:
@@ -144,7 +165,37 @@ def top_k_accuracy(scores, labels, topk=(1, )):
         match_array = np.logical_or.reduce(max_k_preds == labels, axis=1)
         topk_acc_score = match_array.sum() / match_array.shape[0]
         res.append(topk_acc_score)
+    # print('check')
+    # print(res)
+    return res
 
+
+def top_k_accuracy_all_in_one(scores, labels,  topk=(1, )):
+    """Calculate top k accuracy score.
+
+    Args:
+        scores (list[np.ndarray]): Prediction scores for each class.
+        labels (list[int]): Ground truth labels.
+        topk (tuple[int]): K value for top_k_accuracy. Default: (1, ).
+
+    Returns:
+        list[float]: Top k accuracy score for each k.
+    """
+    # pred = np.argmax(scores, axis=1)
+    # cf_mat = confusion_matrix(pred, labels,normalize='pred' ).astype(float)
+    # print(cf_mat)
+    # print(cf_mat.sum(1))
+    check_ = top_k_classes(scores, labels, k=8, mode='accurate')
+    res = []
+    labels = np.array(labels)[:, np.newaxis]
+    for k in topk:
+        max_k_preds = np.argsort(scores, axis=1)[:, -k:][:, ::-1]
+        match_array = np.logical_or.reduce(max_k_preds == labels, axis=1)
+        topk_acc_score = match_array.sum() / match_array.shape[0]
+        res.append(topk_acc_score)
+    # print('check')
+    
+    print(check_)
     return res
 
 
@@ -161,7 +212,7 @@ def mmit_mean_average_precision(scores, labels):
             sample.
 
     Returns:
-        np.float: The MMIT style mean average precision.
+        np.float64: The MMIT style mean average precision.
     """
     results = []
     for score, label in zip(scores, labels):
@@ -181,7 +232,7 @@ def mean_average_precision(scores, labels):
             sample.
 
     Returns:
-        np.float: The mean average precision.
+        np.float64: The mean average precision.
     """
     results = []
     scores = np.stack(scores).T
@@ -209,7 +260,7 @@ def binary_precision_recall_curve(y_score, y_true):
     Returns:
         precision (np.ndarray): The precision of different thresholds.
         recall (np.ndarray): The recall of different thresholds.
-        thresholds (np.ndarray): Different thresholds at which precison and
+        thresholds (np.ndarray): Different thresholds at which precision and
             recall are tested.
     """
     assert isinstance(y_score, np.ndarray)
@@ -401,7 +452,7 @@ def average_recall_at_avg_proposals(ground_truth,
             true_positives_temporal_iou = score >= temporal_iou
             # Get number of proposals as a percentage of total retrieved.
             pcn_proposals = np.minimum(
-                (score.shape[1] * pcn_list).astype(np.int), score.shape[1])
+                (score.shape[1] * pcn_list).astype(np.int64), score.shape[1])
 
             for j, num_retrieved_proposals in enumerate(pcn_proposals):
                 # Compute the number of matches

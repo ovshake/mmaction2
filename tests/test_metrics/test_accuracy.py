@@ -29,7 +29,7 @@ def gt_confusion_matrix(gt_labels, pred_labels, normalize=None):
     confusion_mat = np.delete(confusion_mat, del_index, axis=1)
 
     if normalize is not None:
-        confusion_mat = np.array(confusion_mat, dtype=np.float)
+        confusion_mat = np.array(confusion_mat, dtype=np.float64)
     m, n = confusion_mat.shape
     if normalize == 'true':
         for i in range(m):
@@ -320,7 +320,7 @@ def test_top_k_accurate_classes():
         np.array([0.25, 0.1, 0.3, 0.35]),  # 3
         np.array([0.2, 0.15, 0.3, 0.35]),  # 3
     ]
-    label = np.array([3, 2, 2, 1, 3, 3])
+    label = np.array([3, 2, 2, 1, 3, 3], dtype=np.int64)
 
     with pytest.raises(AssertionError):
         top_k_classes(scores, label, 1, mode='wrong')
@@ -333,7 +333,7 @@ def test_top_k_accurate_classes():
     assert results_top1 == [(3, 1.)]
     assert results_top3 == [(3, 1.), (2, 0.5), (1, 0.0)]
 
-    label = np.array([3, 2, 1, 1, 3, 0])
+    label = np.array([3, 2, 1, 1, 3, 0], dtype=np.int64)
     results_top1 = top_k_classes(scores, label, 1, mode='inaccurate')
     results_top3 = top_k_classes(scores, label, 3, mode='inaccurate')
     assert len(results_top1) == 1

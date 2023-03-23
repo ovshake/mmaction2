@@ -4,7 +4,6 @@ import os
 import os.path as osp
 
 import cv2
-import decord
 import numpy as np
 import torch
 import webcolors
@@ -104,6 +103,8 @@ def get_output(video_path,
         raise NotImplementedError
 
     try:
+        # In case of a segment fault when import decord in the head of demo
+        import decord
         from moviepy.editor import ImageSequenceClip
     except ImportError:
         raise ImportError('Please install moviepy to enable output file.')
@@ -160,8 +161,7 @@ def main():
     cfg.merge_from_dict(args.cfg_options)
 
     # build the recognizer from a config file and checkpoint file/url
-    model = init_recognizer(
-        cfg, args.checkpoint, device=device, use_frames=args.use_frames)
+    model = init_recognizer(cfg, args.checkpoint, device=device)
 
     # e.g. use ('backbone', ) to return backbone feature
     output_layer_names = None
@@ -169,14 +169,13 @@ def main():
     # test a single video or rawframes of a single video
     if output_layer_names:
         results, returned_feature = inference_recognizer(
-            model,
-            args.video,
-            args.label,
-            use_frames=args.use_frames,
-            outputs=output_layer_names)
+            model, args.video, outputs=output_layer_names)
     else:
-        results = inference_recognizer(
-            model, args.video, args.label, use_frames=args.use_frames)
+        results = inference_recognizer(model, args.video)
+
+    labels = open(args.label).readlines()
+    labels = [x.strip() for x in labels]
+    results = [(labels[k[0]], k[1]) for k in results]
 
     print('The top-5 labels with corresponding scores are:')
     for result in results:

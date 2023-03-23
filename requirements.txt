@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 absl-py==1.2.0
 addict==2.4.0
 appdirs==1.4.4
@@ -20,7 +21,7 @@ debugpy==1.6.3
 decorator==4.4.2
 decord==0.6.0
 dill==0.3.5.1
-einops 
+einops @ file:///home/conda/feedstock_root/build_artifacts/einops_1646391317704/work
 etils==0.8.0
 executing==1.1.0
 filelock==3.8.0
@@ -142,3 +143,8 @@ Werkzeug==2.2.2
 xdoctest==1.1.0
 yapf==0.32.0
 zipp==3.8.1
+=======
+-r requirements/build.txt
+-r requirements/optional.txt
+-r requirements/tests.txt
+>>>>>>> cb49d42afbc1808a22a234b73bd7fa946204b057
