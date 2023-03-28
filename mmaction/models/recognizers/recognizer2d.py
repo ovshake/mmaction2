@@ -23,7 +23,7 @@ class Recognizer2D(BaseRecognizer):
         losses = dict()
 
         x = self.extract_feat(imgs)
-        print('out put shape x ', x.shape)
+        # print('out put shape x ', x.shape)
         if self.backbone_from in ['torchvision', 'timm']:
             if len(x.shape) == 4 and (x.shape[2] > 1 or x.shape[3] > 1):
                 # apply adaptive avg pooling

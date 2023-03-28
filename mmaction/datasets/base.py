@@ -66,6 +66,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                  num_classes=None,
                  start_index=1,
                  modality='RGB',
+                 path_=None,
                  sample_by_class=False,
                  power=0,
                  dynamic_length=False):
@@ -83,6 +84,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         self.sample_by_class = sample_by_class
         self.power = power
         self.dynamic_length = dynamic_length
+        self.path_ = path_
 
         assert not (self.multi_class and self.sample_by_class)
 
@@ -142,6 +144,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                  results,
                  metrics='top_k_accuracy',
                  metric_options=dict(top_k_accuracy=dict(topk=(1, 5))),
+                 path_=None,
                  logger=None,
                  **deprecated_kwargs):
         """Perform evaluation for common datasets.
@@ -191,7 +194,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
 
         eval_results = OrderedDict()
         gt_labels = [ann['label'] for ann in self.video_infos]
-
+        print('metrics - ',metrics)
         for metric in metrics:
             msg = f'Evaluating {metric} ...'
             if logger is None:
@@ -218,17 +221,17 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 continue
             
             if metric == 'top_k_accuracy_all_in_one':
-               
+                print('path - ',path_)
                 topk = metric_options.setdefault('top_k_accuracy_all_in_one',
                                                  {}).setdefault(
-                                                     'topk', (1, 5))
+                                                     'topk', (1))
                 if not isinstance(topk, (int, tuple)):
                     raise TypeError('topk must be int or tuple of int, '
                                     f'but got {type(topk)}')
                 if isinstance(topk, int):
                     topk = (topk, )
 
-                top_k_acc = top_k_accuracy_all_in_one(results, gt_labels ,topk )
+                top_k_acc = top_k_accuracy_all_in_one(results, gt_labels ,topk ,path_)
                 log_msg = []
                 for k, acc in zip(topk, top_k_acc):
                     eval_results[f'top{k}_acc'] = acc

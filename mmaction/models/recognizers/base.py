@@ -12,6 +12,23 @@ from mmcv.utils import digit_version
 
 from .. import builder
 
+class AvgConsensus(nn.Module):
+    """Average consensus module.
+
+    Args:
+        dim (int): Decide which dim consensus function to apply.
+            Default: 1.
+    """
+
+    def __init__(self, dim=1):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self, x):
+        """Defines the computation performed at every call."""
+        return x.mean(dim=self.dim, keepdim=True)
+
+
 
 class BaseRecognizer(nn.Module, metaclass=ABCMeta):
     """Base class for recognizers.
@@ -302,6 +319,7 @@ class BaseRecognizer(nn.Module, metaclass=ABCMeta):
         """
         imgs = data_batch['imgs']
         label = data_batch['label']
+        # print(len(data_batch))
 
         aux_info = {}
         for item in self.aux_info:

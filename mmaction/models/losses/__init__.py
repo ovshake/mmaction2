@@ -13,11 +13,11 @@ from .multiple_contrastive_loss import MultipleContrastiveLoss, MultipleContrast
 from .multi_contrastive_loss import multi_contrastive_loss #Multi_Contrastive_Loss
 from .simsiam_loss import Symmetric_ContrastiveLossv2, Asymmetric_ContrastiveLossv2, Symmetric_ContrastiveLossv2_div
 from .moco_loss import MocoLoss
-from .embedding_loss import EmbeddingLoss
+from .embedding_loss import EmbeddingLoss, KD_Loss
 from .supcon_loss import SupConLoss 
 from .contrastive_loss_add_positive import SingleInstanceContrastiveLossv2_add_positive
 from .sup_con_loss import supervisedContrastiveLoss,symmetric_supervisedContrastiveLoss
-
+from .KD_loss import KD, RKD, AT
 __all__ = [
     'BaseWeightedLoss', 'CrossEntropyLoss', 'NLLLoss', 'BCELossWithLogits', 'EmbeddingLoss','SingleInstanceContrastiveLossv2_add_positive',
     'BinaryLogisticRegressionLoss', 'BMNLoss', 'OHEMHingeLoss', 'SSNLoss','SupConLoss',
@@ -25,5 +25,6 @@ __all__ = [
     'ContrastiveLoss', 'MocoLoss', 'SingleInstanceContrastiveLoss', 'MultipleContrastiveSingleInstanceLoss', 'SingleInstanceContrastiveLossv2', 'SimSiamCosineSimLoss', 'MultiplePathwayBaselineContrastiveLoss'
     'SimSiamLoss','multi_contrastive_loss','MultiplePathwayBaselineContrastiveLoss_div', 'Multi_Contrastive_Loss_each_space','Symmetric_ContrastiveLossv2',
     'Asymmetric_ContrastiveLossv2','Symmetric_ContrastiveLossv2_div','SingleInstanceContrastiveLossv2_sum_positive'
-    ,'Supervised_contrastive_loss','supervisedContrastiveLoss', 'symmetric_supervisedContrastiveLoss',
+    ,'Supervised_contrastive_loss','supervisedContrastiveLoss', 'symmetric_supervisedContrastiveLoss','KD_Loss',
+    'KD','RKD','AT',
 ]

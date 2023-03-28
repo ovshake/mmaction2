@@ -15,7 +15,7 @@ class LateFusionRecognizer_all_in_one(Recognizer2D):
     def __init__(self,
                  cls_head,
                  backbone,
-                 CPS_network=None,
+                 speed_network=None,
                  color_network=None,
                  normal_network=None,
                  vcop_network=None,
@@ -24,72 +24,54 @@ class LateFusionRecognizer_all_in_one(Recognizer2D):
                  test_cfg=None,
                  **kwargs):
         super().__init__(backbone=backbone, cls_head=cls_head, train_cfg=train_cfg, test_cfg=test_cfg)
-        self.CPS_network=CPS_network
+        self.speed_network=speed_network
         self.color_network=color_network
         self.vcop_network=vcop_network
-        self.normal_network=normal_network
+
         print('*******************************')
         print(domain, '<<<<<=====domain')
         print('*******************************')
         
         
+        vcop_ckpt_path = {'D1': '/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/VCOP_4_clip/train_D1_test_D1/best_top1_acc_epoch_80.pth',
+                            'D2': '/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/VCOP_4_clip/train_D2_test_D2/best_top1_acc_epoch_55.pth',
+                            'D3': '/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/VCOP_4_clip/train_D3_test_D3/best_top1_acc_epoch_60.pth'}
 
-        
-        vcop_ckpt_path = {'D1': '/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop_cls/tsm-k400-vcop_clip4_batch_12_cls/train_D1_test_D1/best_top1_acc_epoch_80.pth',
-                            'D2': '/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop_cls/tsm-k400-vcop_clip4_batch_12_cls/train_D2_test_D2/best_top1_acc_epoch_55.pth',
-                            'D3': '/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_rgb_vcop_cls/tsm-k400-vcop_clip4_batch_12_cls/train_D3_test_D3/best_top1_acc_epoch_60.pth'}
+        speed_ckpt_path = {'D1':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_speed_pathway_w_pretrained_avg_linear/train_D1_test_D1/best_top1_acc_epoch_50.pth',
+                            'D2':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_speed_pathway_w_pretrained_avg_linear/train_D2_test_D2/best_top1_acc_epoch_80.pth',
+                            'D3':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_speed_pathway_w_pretrained_avg_linear/train_D3_test_D3/best_top1_acc_epoch_20.pth'}
 
-        CPS_ckpt_path = {'D1':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_p_speed_color_pathway/train_D1_test_D1/best_top1_acc_epoch_90.pth',
-                            'D2':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_p_speed_color_pathway/train_D2_test_D2/best_top1_acc_epoch_55.pth',
-                            'D3':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_p_speed_color_pathway/train_D3_test_D3/best_top1_acc_epoch_60.pth'}
-
-        Color_ckpt_path = {'D1':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_speed_pathway/train_D1_test_D1/best_top1_acc_epoch_55.pth',
-                            'D2':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_speed_pathway/train_D2_test_D2/best_top1_acc_epoch_55.pth',
-                            'D3':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-color_speed_pathway/train_D3_test_D3/best_top1_acc_epoch_60.pth'}
-
-        Normal_ckpt_path = {'D1':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-normal_color_pathway/train_D1_test_D1/best_top1_acc_epoch_85.pth',
-                            'D2':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-normal_color_pathway/train_D2_test_D2/best_top1_acc_epoch_55.pth',
-                            'D3':'/data/shinpaul14/projects/mmaction2/work_dirs/tsm_r50_1x1x3_100e_ekmmsada_temp_5_batch_12_V2_cls/tsm-k400-normal_color_pathway/train_D3_test_D3/best_top1_acc_epoch_75.pth'}
-
+        color_ckpt_path = {'D1':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_color_pathway_w_pretrained_linear/train_D1_test_D1/best_top1_acc_epoch_60.pth',
+                            'D2':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_color_pathway_w_pretrained_linear/train_D2_test_D2/best_top1_acc_epoch_80.pth',
+                            'D3':'/data/shinpaul14/projects/mmaction2/work_dirs/Teacher_model/tsm_k400_normal_2_color_pathway_w_pretrained_linear/train_D3_test_D3/best_top1_acc_epoch_60.pth'}
 #    CPS_network=None,
 #                  color_network=None,
 #                  normal_network=None,
 #                  vcop_network=None,
         self.idx = 0
-        if CPS_network:
+        if speed_network:
             self.idx +=1
-
         #speed_ckpt_path = "/data/jongmin/projects/mmaction2/work_/speed/{domain}/latest.pth"
-            self.CPS_network = builder.build_model(CPS_network)
-            speed_network_state_dict = torch.load(CPS_ckpt_path[domain])
-            self.CPS_network.load_state_dict(speed_network_state_dict["state_dict"], strict=False)
+            self.speed_network = builder.build_model(speed_network)
+            speed_network_state_dict = torch.load(speed_ckpt_path[domain])
+            self.speed_network.load_state_dict(speed_network_state_dict["state_dict"], strict=False)
         else:
-            self.CPS_network = None
+            self.speed_network = None
+
         if color_network:
             self.idx +=1
             
             self.color_network = builder.build_model(color_network)
-            color_network_state_dict = torch.load(Color_ckpt_path[domain])
+            color_network_state_dict = torch.load(color_ckpt_path[domain])
             self.color_network.load_state_dict(color_network_state_dict["state_dict"], strict=False)
         else:
             self.color_network = None
         
-        if normal_network:
-            self.idx +=1
-            
-            self.normal_network = builder.build_model(normal_network)
-            normal_network_state_dict = torch.load(Normal_ckpt_path[domain])
-            self.color_network.load_state_dict(normal_network_state_dict["state_dict"], strict=False)
-        else: 
-            self.normal_network = None
         if vcop_network:
             self.idx +=1
-            
             self.vcop_network = builder.build_model(vcop_network)
             vcop_network_state_dict = torch.load(vcop_ckpt_path[domain])
             self.vcop_network.load_state_dict(vcop_network_state_dict["state_dict"], strict=False)
-            # vcop_head = dict(type='VCOPHead',num_clips=3, feature_size=2048*7*7 )
-            # self.vcop_emb_head = builder.build_head(vcop_head)
         else:
             self.vcop_network = None
 

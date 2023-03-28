@@ -280,6 +280,7 @@ def main():
         # Overwrite output_config from args.out
         output_config = Config._merge_a_into_b(
             dict(out=args.out), output_config)
+        out_path = args.out
 
     # Load eval_config from cfg
     eval_config = cfg.get('eval_config', {})
@@ -287,6 +288,8 @@ def main():
         # Overwrite eval_config from args.eval
         eval_config = Config._merge_a_into_b(
             dict(metrics=args.eval), eval_config)
+        # eval_config['path'] = args.out
+        # print('eval_config', eval_config)
     if args.eval_options:
         # Add options from args.eval_options
         eval_config = Config._merge_a_into_b(args.eval_options, eval_config)
@@ -361,7 +364,7 @@ def main():
             print(f'\nwriting results to {out}')
             dataset.dump_results(outputs, **output_config)
         if eval_config:
-            eval_res = dataset.evaluate(outputs, **eval_config)
+            eval_res = dataset.evaluate(outputs,path_=out_path, **eval_config)
             for name, val in eval_res.items():
                 print(f'{name}: {val:.04f}')
 

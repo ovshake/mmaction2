@@ -23,11 +23,14 @@ from .multi_simsiam_recognizer2d import Mult_SimSiam_Recognizer2D
 from .late_fusion2d import LateFusionRecognizer, LateFusionRecognizer_all,LateFusionRecognizer_vcop, LateFusionRecognizer_norm_before, LateFusionRecognizer_norm_after, LateFusionRecognizer_combine_all, LateFusionRecognizer_combine_two,LateFusionRecognizer_combine_speed_color
 from .late_fusion2d_v2_clip import LateFusionRecognizer_all_in_one_clip, LateFusionRecognizer_all_in_one_ucf_hmdb_clip
 
+from .multiple_response_base_distiller import Multiple_response_baseDistillerRecognizer
+
 from .check_shape import check_shape_Recognizer2D
 from .L2D import L2DRecognizer2D
 from .late_fusion2d_v2 import LateFusionRecognizer_all_in_one, LateFusionRecognizer_all_in_one_ucf_hmdb
 from .simsiam_contrastive_recognizer2d import SimSiamRecognizer2D_add_positive_2_denominator
-
+from .multiple_distiller import Multiple_Distiller_Recognizer
+from .teacher_ensemble import Teacher_ensemble
 from .asymmetric_simsiam_recognizer2d import asymmetrical_SimSiamRecognizer2D
 __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 'SlowFastSelfSupervisedRecognizer2D','LateFusionRecognizer_all_in_one_ucf_hmdb','CLIP_Recognizer2D',
             'SlowFastSelfSupervisedContrastiveHeadRecognizer2D','L2DRecognizer2D','MultipleContrastiveDistillerRecognizer_4',
@@ -42,6 +45,7 @@ __all__ = ['BaseRecognizer', 'Recognizer2D', 'Recognizer3D', 'AudioRecognizer', 
             'VCOPSRecognizer2D_no_cls', 'VCOPSRecognizer2D', 'Recognizer2D_no_cls', 'SimSiamRecognizer2D_vinilla','Mult_SimSiam_Recognizer2D',
             'SimSiamRecognizerWithSimSiamLoss2D', 'LateFusionRecognizer','LateFusionRecognizer_all','LateFusionRecognizer_vcop', 'LateFusionRecognizer_norm_before', 'LateFusionRecognizer_norm_after','LateFusionRecognizer_combine_all'
             ,'LateFusionRecognizer_combine_two','LateFusionRecognizer_combine_speed_color',
-            'asymmetrical_SimSiamRecognizer2D'
-            
+            'asymmetrical_SimSiamRecognizer2D',
+            'Multiple_response_baseDistillerRecognizer','Multiple_Distiller_Recognizer',
+            'Teacher_ensemble',             
             ]

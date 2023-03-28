@@ -124,14 +124,14 @@ class projection_MLP_avg(nn.Module):
 
 
 
-        self.fc1 = nn.Linear(feature_size * num_segments , middle_layer_dim, bias=False)
+        self.fc1 = nn.Linear(feature_size, middle_layer_dim, bias=True)
         self.BN1 = nn.BatchNorm1d(middle_layer_dim)
         self.relu_1 = nn.ReLU(inplace=True)
-        self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=False)
+        self.fc2 = nn.Linear(middle_layer_dim, img_dim, bias=True)
         self.BN2 = nn.BatchNorm1d(img_dim)
         self.relu_2 = nn.ReLU(inplace=True)
-        self.fc3 = nn.Linear(img_dim, img_dim, bias=False)
-        self.BN3 = nn.BatchNorm1d(img_dim, affine=False)
+        self.fc3 = nn.Linear(img_dim, img_dim, bias=True)
+        self.BN3 = nn.BatchNorm1d(img_dim)
 
         self.encoder = nn.Sequential(self.fc1, self.BN1, self.relu_1, self.fc2, self.BN2, self.relu_2, self.fc3, self.BN3)
 
@@ -163,14 +163,17 @@ class projection_MLP_avg(nn.Module):
     def forward(self, features):
         #[N x Batch, 2048]
         # average N frames of features
+        # print('features size before any thing : ', features.size())
         if self.spatial_type == 'avg':
-            features = self.avg_pool(features)
+            features = features.view((-1, self.num_segments) + features.size()[1:])
+            features = self.consensus(features)
+            features = features.squeeze(1)
         elif self.spatial_type == 'frame':
             features = features
         else:
         # this reduces the dimensionality of the features to the batch size where single video of N frames are concat on dim=1 and through the FC layer it is reduced to 2048
             features = rearrange(features, '(b c) e -> b (c e)', c=self.num_segments)
-   
+        # print()
         features = self.encoder(features)
         return features
 

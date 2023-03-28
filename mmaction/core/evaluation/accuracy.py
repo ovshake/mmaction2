@@ -3,7 +3,8 @@ import numpy as np
 from sklearn.metrics import  ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import sys
-
+import os
+import json
 def confusion_matrix(y_pred, y_real, normalize=None):
     """Compute confusion matrix.
 
@@ -170,7 +171,7 @@ def top_k_accuracy(scores, labels, topk=(1, )):
     return res
 
 
-def top_k_accuracy_all_in_one(scores, labels,  topk=(1, )):
+def top_k_accuracy_all_in_one(scores, labels,  topk=(1), output_dir=None):
     """Calculate top k accuracy score.
 
     Args:
@@ -181,10 +182,12 @@ def top_k_accuracy_all_in_one(scores, labels,  topk=(1, )):
     Returns:
         list[float]: Top k accuracy score for each k.
     """
-    # pred = np.argmax(scores, axis=1)
-    # cf_mat = confusion_matrix(pred, labels,normalize='pred' ).astype(float)
+    pred = np.argmax(scores, axis=1)
+    cf_mat = confusion_matrix(pred, labels,normalize='pred' ).astype(float)
     # print(cf_mat)
     # print(cf_mat.sum(1))
+    save_file = {}
+    new_path = os.path.join(os.path.dirname(output_dir), 'prediction.json')
     check_ = top_k_classes(scores, labels, k=8, mode='accurate')
     res = []
     labels = np.array(labels)[:, np.newaxis]
@@ -193,9 +196,29 @@ def top_k_accuracy_all_in_one(scores, labels,  topk=(1, )):
         match_array = np.logical_or.reduce(max_k_preds == labels, axis=1)
         topk_acc_score = match_array.sum() / match_array.shape[0]
         res.append(topk_acc_score)
+    max_k_preds_list = [int(i[0]) for i in max_k_preds]
+    label_list = [int(i[0]) for i in labels]
+  
+    #-------
+    # check_ = dict(check_)
+    check_ = [(int(k), v) for k, v in check_]
+    save_file['pred'] = max_k_preds_list
+    save_file['label'] = label_list
+    save_file['top_class'] = check_
+    save_file['cf_mat'] = cf_mat.tolist()
+    # print(check_)
+    with open(new_path, 'w') as f:
+        json.dump(save_file, f)
+
+
+   
+
+ 
+    # print('max_k_preds_list - ',max_k_preds_list)
+    # print('label_list - ',label_list )
     # print('check')
     
-    print(check_)
+    # print(check_)
     return res
 
 
